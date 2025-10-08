@@ -204,11 +204,11 @@ export default function AllotSeats() {
                                                     <div className='w-full mb-5 p-5 grid grid-cols-4 gap-5 place-items-center border border-neutral-500 rounded'>
                                                         {floor.classRooms.map((classRoom, cRIdx) => 
                                                             <div key={cRIdx}>
-                                                                <label htmlFor={cRIdx} className="px-3 py-2 bg-neutral-300 rounded flex items-center">
+                                                                <label htmlFor={`${bIdx}${fIdx}${cRIdx}`} className="px-3 py-2 bg-neutral-300 rounded flex items-center">
                                                                     {classRoom.name} 
                                                                     <input 
                                                                         className="ml-2 size-5"
-                                                                        id={cRIdx}
+                                                                        id={`${bIdx}${fIdx}${cRIdx}`}
                                                                         type="checkbox"
                                                                         checked={classRoom.isSelected}
                                                                         onChange={(e) => handleClassRoomSelection(e, bIdx, fIdx, cRIdx)}/>  

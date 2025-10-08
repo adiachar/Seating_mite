@@ -67,18 +67,24 @@ export const addBuilding = async (req, res) => {
 
 export const updateBuildingData = async (req, res) => {
     try {
-        const {collegeId, building} = req.body();
+        const {collegeId, building} = req.body;
         
-        const college = College.findById(collegeId).lean();
+        const college = await College.findById(collegeId);
 
         if(!college) {
             return res.status(404).json({message: "College Not Found!"});
         }
 
-        const buildingIdx = college.buildings.findIndex(oldBuilding => oldBuilding.name == building.name);
-        college.buildings[buildingIdx] = building;
+        const buildingIdx = college.buildings.findIndex(oldBuilding => oldBuilding._id.toString() === building._id);
 
+        if(buildingIdx == -1) {
+            return res.status(404).json({message: "Building Not Found!"});
+        }
+
+        college.buildings[buildingIdx] = building;
         await college.save();
+
+        return res.status(200).json({message: "Building Updated Successfully!"});
 
     } catch(err) {
         console.log(err);

@@ -18,7 +18,9 @@ export default function CollegeData() {
             const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${collegeId}`);
 
             if(response.status === 200) {
-                setCollege(response.data.college);
+                let collegeData = response.data.college;
+                collegeData.buildings = collegeData.buildings.map((building) => {return {...building, edit: false}});
+                setCollege(collegeData);
             }
         } catch(err) {
             console.log(err);
@@ -29,59 +31,201 @@ export default function CollegeData() {
         getCollegeData();
     }, [refresh]);
 
+    const editBuilding = (bIdx) => {
+        let updatedCollege = college;
+        updatedCollege.buildings[bIdx].edit = !updatedCollege.buildings[bIdx].edit;
+
+        setCollege({...updatedCollege});
+    }
+
+    const handleBuildingChange = (e, bIdx) => {
+        let updatedCollege = college;
+        updatedCollege.buildings[bIdx][e.target.name] = e.target.value;
+
+        setCollege({...updatedCollege});
+    }
+
+    const handleFloorChange = (e, bIdx, fIdx) => {
+        let updatedCollege = college;
+        updatedCollege.buildings[bIdx].floors[fIdx][e.target.name] = e.target.value;
+
+        setCollege({...updatedCollege});
+    }
+
+    const handleClassChange = (e, bIdx, fIdx, cRIdx) => {
+        let updatedCollege = college;
+        updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx][e.target.name] = e.target.value;
+
+        setCollege({...updatedCollege});
+    }
+
+    const addNewFloor = (bIdx) => {
+        let updatedCollege = college;
+
+        if(updatedCollege.buildings[bIdx].floors[updatedCollege.buildings[bIdx].floors.length - 1].name != '') {
+            updatedCollege.buildings[bIdx].floors.push({name: '', classRooms: [{name: '', rows: '', columns: ''}]});
+        }
+
+        setCollege({...updatedCollege});
+    }
+
+    const addNewClassRoom = (bIdx, fIdx) => {
+        let updatedCollege = college;
+
+        if(updatedCollege.buildings[bIdx].floors[fIdx].classRooms[updatedCollege.buildings[bIdx].floors[fIdx].classRooms.length - 1].name != '') {
+            updatedCollege.buildings[bIdx].floors[fIdx].classRooms.push({name: '', rows: '', columns: ''});
+        }
+
+        setCollege({...updatedCollege});
+    }
+
+    const deleteClass = (bIdx, fIdx, cRIdx) => {
+        let updatedCollege = college;
+
+        delete updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx];
+
+        setCollege({...updatedCollege});
+    }
+
+    const deleteFloor = (bIdx, fIdx) => {
+        let updatedCollege = college;
+
+        delete updatedCollege.buildings[bIdx].floors[fIdx];
+
+        setCollege({...updatedCollege});   
+    }
+
+    const saveUpdates = async (bIdx) => {
+        try {
+            let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/college/update-building-data`, 
+                {collegeId: college._id, building: college.buildings[bIdx]});
+            if(response.status == 200) {
+                alert("Data Saved Successfully");
+                setRefresh(r => !r);
+            }
+        } catch(err) {
+            console.log(err);
+            alert("Something went wrong!");
+        }
+    }
+
     return (
         <div className='w-full p-5'>
-            {college && 
+            {college ?
                 <div className='w-full'>
                     <h1>{college.name}</h1>
 
                     <div className='w-full p-2 border'>
                         <AddNewBuilding setRefresh={setRefresh}/>
                         <div className='w-full mt-5'>
-                            {college.buildings.length != 0 ? college.buildings.map((building, idx) => 
-                                <div key={idx} className='w-full mb-3 p-3 border rounded flex flex-col items-start'>
+                            {college.buildings.length != 0 ? college.buildings.map((building, bIdx) => 
+                                <div key={bIdx} className='w-full mb-3 p-3 border rounded flex flex-col items-start'>
+                                    <div className='w-full p-2 flex gap-2 my-2 bg-neutral-200'>
+                                        {!building.edit &&
+                                            <Button
+                                                sx={{
+                                                    boxShadow: "none"
+                                                }}
+                                                color='primary'
+                                                size='small'
+                                                variant='contained' 
+                                                onClick={() => editBuilding(bIdx)}>Edit</Button>
+                                        }
+                                        {building.edit && 
+                                            <>
+                                                <Button
+                                                    sx={{
+                                                        boxShadow: "none"
+                                                    }}
+                                                    color='success'
+                                                    size='small'
+                                                    variant='contained' 
+                                                    onClick={() => saveUpdates(bIdx)}>Save</Button>
+
+                                                <Button
+                                                    sx={{
+                                                        boxShadow: "none"
+                                                    }}
+                                                    color='dark'
+                                                    size='small'
+                                                    variant='outlined' 
+                                                    onClick={() => setRefresh(r => !r)}>Back</Button>                                            
+                                            </>
+                                        }                                       
+                                    </div>
+
                                     <label htmlFor="" className='mb-2 flex flex-col'>
                                         Building Name:
-                                        <input type='text' value={building.name} className='bg-neutral-300 rounded px-2' readOnly={true}/>
+                                        <input type='text' name='name' placeholder='ex: main block' onChange={(e) => handleBuildingChange(e, bIdx)} value={building.name} className='bg-neutral-300 rounded px-2' readOnly={!building.edit}/>
                                     </label>
                                     <label htmlFor="" className='flex flex-col'>
                                         Number of Floors:
                                         <input type='text' value={building.noOfFloors} className='bg-neutral-300 rounded px-2' readOnly={true}/>
                                     </label>
                                     {
-                                        building.floors.length > 0 ? building.floors.map((floor, idx) =>
-                                            <div key={idx} className='w-full mt-3 p-3 border rounded'>
+                                        building.floors.length > 0 ? building.floors.map((floor, fIdx) =>
+                                            <div key={fIdx} className='w-full mt-3 p-3 border rounded'>
                                                 <label htmlFor="" className='flex'>
                                                     Floor Name:
-                                                    <input type='text' value={floor.name} className='ml-2 px-2 bg-neutral-300 rounded' readOnly={true}/>
+                                                    <input type='text' name='name' onChange={(e) => handleFloorChange(e, bIdx, fIdx)} value={floor.name} className='ml-2 px-2 bg-neutral-300 rounded' readOnly={!building.edit}/>
                                                 </label>
                                                 <div className='mt-5 w-full '>
                                                     <h1 className='inline'>ClassRooms:</h1>
-                                                    {floor.classRooms.map((classRoom, idx) => 
-                                                        <div key={idx} className='w-full mb-1 p-2 flex flex-wrap gap-2 bg-neutral-200 overflow-auto'>
+                                                    {floor.classRooms.map((classRoom, cRIdx) => 
+                                                        <div key={cRIdx} className='w-full mb-1 p-2 flex flex-wrap gap-2 bg-neutral-200 overflow-auto'>
                                                             <label htmlFor="" className='flex gap-2'>
                                                                 Name:
-                                                                <input required type="text" placeholder='Class Name' name='name' value={classRoom.name} readOnly={true}/>
+                                                                <input required type="text" name='name' onChange={(e) => handleClassChange(e, bIdx, fIdx, cRIdx)}  placeholder='Class Name'  value={classRoom.name} readOnly={!building.edit}/>
                                                             </label>
                                                             <label htmlFor="" className='flex gap-2'>
                                                                 Rows:
-                                                                <input required type="number" placeholder='Rows' name='rows' value={classRoom.rows} readOnly={true}/>
+                                                                <input required type="number" name='rows' onChange={(e) => handleClassChange(e, bIdx, fIdx, cRIdx)} placeholder='Rows' value={classRoom.rows} readOnly={!building.edit}/>
                                                             </label>
                                                             <label htmlFor="" className='flex gap-2'>
                                                                 Columns:
-                                                                <input required type="number" placeholder='Columns' name='columns' value={classRoom.columns} readOnly={true}/>
+                                                                <input required type="number" name='columns' onChange={(e) => handleClassChange(e, bIdx, fIdx, cRIdx)}  placeholder='Columns' value={classRoom.columns} readOnly={!building.edit}/>
                                                             </label>
+                                                            {building.edit && <Button
+                                                                sx={{
+                                                                    boxShadow: "none",
+                                                                }}
+                                                                color='error'
+                                                                size='small'
+                                                                variant='outlined' 
+                                                                onClick={() => deleteClass(bIdx, fIdx, cRIdx)}>Delete</Button>}
                                                         </div>
                                                     )}
                                                 </div>
+                                                <div className='flex gap-3'>  
+                                                    {building.edit && <Button
+                                                        sx={{
+                                                            boxShadow: "none",
+                                                        }}
+                                                        color='warning'
+                                                        size='small'
+                                                        variant='outlined' 
+                                                        onClick={() => addNewClassRoom(bIdx, fIdx)}>Add Class</Button>}
+
+                                                    {building.edit && <Button
+                                                        sx={{
+                                                            boxShadow: "none",
+                                                        }}
+                                                        color='error'
+                                                        size='small'
+                                                        variant='contained' 
+                                                        onClick={() => deleteFloor(bIdx, fIdx)}>Delete</Button>}
+                                                </div>
+                                                
                                             </div>
                                         ): <h1>No Floors Added!</h1>
                                     }
+                                    {building.edit && <Button onClick={(e) => addNewFloor(bIdx)}>Add Floor</Button>}
                                 </div>    
                             ): <p>No Buildings Added</p>}
                         </div>                        
                     </div>
-                </div>}
+                </div>
+            : <h1>Loading..</h1>}
         </div>
     )
 }
