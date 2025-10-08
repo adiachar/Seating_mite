@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 
-let batchTable = [[]];
+let batchTable = [];
 
 export default function AllotSeats() {
     const [college, setCollege] = useState(null);
     const examRequest = useLocation().state.examReq;
     const [examReq, setExamReq] = useState(null);
     const user = useSelector(state => state.user);
+    const [noOfBatch, setNoOfBatch] = useState(2);
+    const [noOfStudentCategories, setNoOfStudentCategories] = useState(0);
 
     const getCollegeData = async () => {
         if(!user) {
@@ -44,31 +46,36 @@ export default function AllotSeats() {
                 setExamReq(er => { return {...examRequest, eligibleStudents: response.data.eligibleStudents}});
             }                
         } catch(err) {
-            console.log(err);
+            console.log(err);                   
         }
     }
 
     useEffect(() => {
         getCollegeData();
-
         if(examRequest._id) {
             getEligibleStudents(examRequest);
+            
         } else {
             navigate('/all-requests');
         }
     }, []);
+
+    useEffect(() => {
+        if(examReq) {
+            setNoOfStudentCategories(examReq.eligibleStudents.length);
+        }
+    }, [examReq]);
 
     const handleBuildingSelection = (e, bIdx) => {
         let updatedCollege = college;
         updatedCollege.buildings[bIdx].isSelected = !updatedCollege.buildings[bIdx].isSelected;
 
         if(!updatedCollege.buildings[bIdx].isSelected) {
-            updatedCollege.buildings = updatedCollege.buildings.map(building => 
-                    {return {...building, floors: building.floors.map(floor => 
+            updatedCollege.buildings[bIdx].floors = updatedCollege.buildings[bIdx].floors.map(floor => 
                         {return {...floor, isSelected: false, classRooms: floor.classRooms.map(classRoom => 
-                            {return {...classRoom, isSelected: false}})}})}});
-
+                            {return {...classRoom, isSelected: false}})}})
         }
+        
         setCollege({...updatedCollege});
     }
 
@@ -91,37 +98,47 @@ export default function AllotSeats() {
     }
 
     const createBatch = () => {
-        let batches = examReq.eligibleStudents.map((elStd) => {return {batch: `${elStd.branch}-${elStd.semester}`, students: elStd.students}});
-        let batchSize = ( batches.length / 2 ) + ( batches.length % 2 );
+        let stdCategory = examReq.eligibleStudents.map((elStd) => {return {batch: `${elStd.branch}-${elStd.semester}`, students: elStd.students}});
+        let eachBatchSize = parseInt(( stdCategory.length / noOfBatch ) + ( stdCategory.length % noOfBatch ));
+        let batches = Array.from({length: noOfBatch}, (_) => Array());
         
-        let batchAComplete = batches.slice(0, batchSize);
-        let batchBComplete = batches.slice(batchSize, batches.length);
-
-        let batchA = [];
-        let batchB = [];
+        let startIdx = 0;
+        for(let i = 0; i < noOfBatch - 1; i++) {
+            batches[i].push(...stdCategory.slice(startIdx, (startIdx + eachBatchSize)));
+            startIdx += eachBatchSize;
+        }
+        batches[noOfBatch - 1].push(...stdCategory.slice(startIdx, stdCategory.length));
         
-        for(let batch of batchAComplete) {
-            batchA = [...batchA, ...batch.students];
+        for(let i = 0; i < batches.length; i++) {
+
+            let updatedBatch = [];
+            for(let stdCat of batches[i]) {
+                updatedBatch = [...updatedBatch, ...stdCat.students];
+            }
+
+            batches[i] = updatedBatch;
         }
+        
+        let batchLengths = batches.map((batch) => batch.length);
+        let maxBatchSize = Math.max(...batchLengths);
 
-        for(let batch of batchBComplete) {
-            batchB = [...batchB, ...batch.students];
+        batchTable = [];
+
+        for(let j = 0; j < maxBatchSize; j++) {
+            let newRow = [];
+            for(let i = 0; i < batches.length; i++) {
+                newRow.push(batches[i][j]);
+            }
+            batchTable.push(newRow);
         }
-
-        let batchALength = batchA.length;
-        let batchBLength = batchB.length;
-
-        batchTable = Array.from({length: Math.max(batchALength, batchBLength)}, (_, idx) => {
-            return [idx < batchALength ? batchA[idx] : 0, idx < batchBLength ? batchB[idx] : 0];
-        });
     }
 
     const allotSeat = () => {
         createBatch();
-
+        
         let updatedCollege = college;
-        let btc0r = 0;
-        let btc1r = 0;
+        let btr = Array(batchTable[0].length).fill(0);
+        let btc = 0;
 
         for(let building of updatedCollege.buildings) {
             if(building.isSelected) {
@@ -131,12 +148,15 @@ export default function AllotSeats() {
                             if(floor.classRooms[room].isSelected) {
                                 let seats = floor.classRooms[room].seats;
                                 for(let j = 0; j < floor.classRooms[room].columns; j++) {
-                                    let btc = j % 2;
-                                    for(let i = 0; i < floor.classRooms[room].rows; i++) {
-                                        seats[i][j] = (btc == 0 && btc0r > batchTable.length - 1) || (btc == 1 && btc1r > batchTable.length - 1) ? 0 : batchTable[btc == 0 ? btc0r++ : btc1r++][btc];
+                                    if(btc >= noOfBatch) {
+                                        btc = 0;
                                     }
+                                    
+                                    for(let i = 0; i < floor.classRooms[room].rows; i++) {
+                                        seats[i][j] = (btr[btc] < batchTable.length && batchTable[btr[btc]][btc]) ? batchTable[btr[btc]++][btc] : 0;
+                                    }
+                                    btc++;
                                 }
-                                
                                 floor.classRooms[room].seats = seats;
                             }
                         }                         
@@ -208,7 +228,20 @@ export default function AllotSeats() {
 
                         )}                            
                     </div>
-                    
+                    <div className="my-5 flex gap-2">
+                        <Button 
+                            sx={{backgroundColor: "black", color: "white"}}
+                            size="small" 
+                            variant="contained" 
+                            onClick={() => setNoOfBatch(n => n - 1 >= 1 ? n - 1 : 1)}>-</Button>
+                        <input type="number" className="w-10 px-2 text-center" readOnly={true} value={noOfBatch}/>
+                        <Button 
+                            sx={{backgroundColor: "black", color: "white"}}
+                            size="small" 
+                            variant="contained" 
+                            onClick={() => setNoOfBatch(n => n + 1 <= noOfStudentCategories ? n + 1 : noOfStudentCategories)}>+</Button>
+                        <button onClick={allotSeat} className="px-3 py-2 rounded text-white bg-green-500">Allot Seats</button>
+                    </div>
                     <div>
                         <h1 className="font-semibold text-lg text-center text-neutral-700">Selected Classes for Allotment:</h1>
                         <div>
@@ -239,7 +272,7 @@ export default function AllotSeats() {
                                                         <div 
                                                             className={`w-full mt-3 grid row-auto gap-2 place-items-center`}
                                                             style={{gridTemplateColumns: `repeat(${classRoom.columns}, auto)`}}>
-                                                            {classRoom.seats.map( row => row.map((col, idx) => <div key={idx} className="w-full p-5 bg-neutral-200">{col != 0 ? col : "-"}</div>))}
+                                                            {classRoom.seats.map( row => row.map((col, idx) => <div key={idx} className="w-full p-5 bg-neutral-200">{col == 0 ? '-' : col}</div>))}
                                                         </div>
                                                     </div>) : null
                                                 )   
@@ -253,7 +286,6 @@ export default function AllotSeats() {
                     </div>   
                 </div>         
             : <p>No Rooms Available</p>}
-        <button onClick={allotSeat} className="px-3 py-2 rounded text-white bg-green-500">Allot Seats</button>
         </div>
     )
 }
