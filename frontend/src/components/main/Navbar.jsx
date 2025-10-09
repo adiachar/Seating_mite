@@ -35,7 +35,7 @@ export default function Navbar() {
 
   return (
     <div className='navbar px-5 py-3 flex justify-end bg-neutral-200'>
-      <ul className='mr-2 flex gap-2 text-md cursor-pointer'>
+      {user?._id && <ul className='mr-2 flex gap-2 text-md cursor-pointer'>
         <li 
           className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors'
           onClick={() => navigate("/")}
@@ -61,7 +61,7 @@ export default function Navbar() {
         }
         <li className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors'>About</li>
         <li className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors'>Help</li>
-      </ul>
+      </ul>}
     </div>
   )
 }

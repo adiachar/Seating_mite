@@ -15,6 +15,14 @@ import LockOpenIcon from '@mui/icons-material/LockOpen';
 export default function Sign() {
 
     const [isSignIn, setIsSignIn] = useState(true);
+    const user = useSelector(state => state.user);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if(user?._id) {
+            navigate('/');
+        }
+    });
 
     return (
         <div className="w-full py-10 px-2 flex justify-center items-center">
