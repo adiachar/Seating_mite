@@ -31,7 +31,7 @@ export default function ExamRequestCard({examReq, setRefresh}) {
   return (
     <div className='w-full p-5 border border-gray-300 rounded shadow hover:shadow-lg transition-shadow'>
         <h3 className='py-1 px-2 font-semibold rounded bg-neutral-300 inline'>{examReq.examType} - {examReq.year}</h3>
-        <div className='mt-3 flex gap-3 overflow-x-auto'>
+        <div className='w-full mt-3 flex gap-3 overflow-x-auto'>
             <button 
               className='px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-nowrap'
               onClick={() => navigate('/view-exam-details', {state: {examReq: examReq}})}
@@ -48,6 +48,12 @@ export default function ExamRequestCard({examReq, setRefresh}) {
                   variant='outlined' 
                   color='error'
                   size='small'
+                  sx={{
+                    whiteSpace: 'nowrap',
+                    width: 'auto',
+                    minWidth: 'unset',
+                    padding: '0.3rem 1rem',
+                  }}
                   loading={delLoading}
                   onClick={() => deleteExamRequest()}
                   >Delete Request</Button>
@@ -56,6 +62,12 @@ export default function ExamRequestCard({examReq, setRefresh}) {
                 variant='outlined' 
                 color='dark'
                 size='small'
+                sx={{
+                    whiteSpace: 'nowrap',
+                    width: 'auto',
+                    minWidth: 'unset',
+                    padding: '0.3rem 1rem',
+                  }}
                 loading={delLoading}
                 onClick={() => navigate("/allot-seats", {state: {examReq: examReq}})}
                 >Allot Seats</Button>
@@ -64,6 +76,12 @@ export default function ExamRequestCard({examReq, setRefresh}) {
                 variant='outlined' 
                 color='dark'
                 size='small'
+                sx={{
+                    whiteSpace: 'nowrap',
+                    width: 'auto',
+                    minWidth: 'unset',
+                    padding: '0.3rem 1rem',
+                  }}
                 loading={delLoading}
                 onClick={() => navigate("/allotment", {state: {examReq: examReq}})}
                 >View Allotment</Button>           

@@ -35,32 +35,32 @@ export default function Navbar() {
 
   return (
     <div className='navbar px-5 py-3 flex justify-end bg-neutral-200'>
-      {user?._id && <ul className='mr-2 flex gap-2 text-md cursor-pointer'>
+      {user?._id && <ul className='mr-2 flex gap-2 text-md cursor-pointer overflow-auto'>
         <li 
-          className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors'
+          className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors text-nowrap'
           onClick={() => navigate("/")}
           >Home</li>
         {user?.type != 'student' && 
           <li 
             onClick={() => navigate("/all-requests")}
-            className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors'
+            className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors text-nowrap'
             >All Requests</li>}
         {user?.type === 'admin' && 
           <>
             <li 
               onClick={() => navigate("/add-exam-request")}
-              className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors'
+              className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors text-nowrap'
               >Add Exam Request
             </li>
             <li 
               onClick={() => navigate("/college-data")}
-              className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors'
+              className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors text-nowrap'
               >College Data
             </li>
           </>
         }
-        <li className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors'>About</li>
-        <li className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors'>Help</li>
+        <li className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors text-nowrap'>About</li>
+        <li className='px-3 py-2 hover:bg-neutral-400 rounded transition-colors text-nowrap'>Help</li>
       </ul>}
     </div>
   )

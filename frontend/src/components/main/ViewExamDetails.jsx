@@ -46,12 +46,12 @@ export default function ViewExamDetails() {
                         
                         <li key={idx} className='p-2 mb-2 border rounded'>
                             <div>
-                                <div>
-                                    <p className='mr-2 px-2 bg-neutral-300 rounded inline font-bold'>
+                                <div className='mb-2 flex flex-wrap gap-2'>
+                                    <p className='px-2 bg-neutral-300 rounded inline font-bold'>
                                         Branch:
                                         <span className='px-1 font-normal'>{elStudents.branch}</span>
                                     </p>
-                                    <p className='mr-2 px-2 bg-neutral-300 rounded inline font-bold'>
+                                    <p className='px-2 bg-neutral-300 rounded inline font-bold'>
                                         Semester:
                                         <span className='px-1 font-normal'>{elStudents.semester}</span>
                                     </p>

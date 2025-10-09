@@ -233,7 +233,7 @@ export default function AllotSeats() {
                                                     >{floor.name}</Button>
 
                                                 {floor.isSelected &&
-                                                    <div className='w-full mb-5 p-5 grid grid-cols-4 gap-5 place-items-center border border-neutral-500 rounded'>
+                                                    <div className='w-full mb-5 p-5 grid grid-cols-4 gap-5 place-items-center border border-neutral-500 rounded overflow-auto'>
                                                         {floor.classRooms.map((classRoom, cRIdx) => 
                                                             <div key={cRIdx}>
                                                                 <label htmlFor={`${bIdx}${fIdx}${cRIdx}`} className="px-3 py-2 bg-neutral-300 rounded flex items-center">
@@ -260,7 +260,7 @@ export default function AllotSeats() {
 
                         )}                            
                     </div>
-                    <div className="my-5 flex gap-2">
+                    <div className="my-5 flex gap-2 overflow-auto">
                         <Button 
                             sx={{backgroundColor: "black", color: "white"}}
                             size="small" 
@@ -272,8 +272,20 @@ export default function AllotSeats() {
                             size="small" 
                             variant="contained" 
                             onClick={() => setNoOfBatch(n => n + 1 <= noOfStudentCategories ? n + 1 : noOfStudentCategories)}>+</Button>
-                        <Button onClick={allotSeat} variant="outlined" color="success">Allot Seats</Button>
-                        <Button onClick={finalizeAllotment} variant="contained" color="success">Finalize Allotment</Button>
+                        <Button
+                            size="small"
+                            sx={{
+                                whiteSpace: "nowrap",
+                                minWidth: "unset"
+                            }}
+                            onClick={allotSeat} variant="outlined" color="success">Allot Seats</Button>
+                        <Button
+                            size="small"
+                            sx={{
+                                whiteSpace: "nowrap",
+                                minWidth: "unset"
+                            }} 
+                            onClick={finalizeAllotment} variant="contained" color="success">Finalize Allotment</Button>
                     </div>
                     <div>
                         <h1 className="font-semibold text-lg text-center text-neutral-700">Selected Classes for Allotment:</h1>
@@ -303,7 +315,7 @@ export default function AllotSeats() {
                                                             </p>
                                                         </div>
                                                         <div 
-                                                            className={`w-full mt-3 grid row-auto gap-2 place-items-center`}
+                                                            className={`w-full mt-3 grid row-auto gap-2 place-items-center overflow-auto`}
                                                             style={{gridTemplateColumns: `repeat(${classRoom.columns}, auto)`}}>
                                                             {classRoom.seats.map( row => row.map((col, idx) => <div key={idx} className="w-full p-5 bg-neutral-200">{col == 0 ? '-' : col}</div>))}
                                                         </div>

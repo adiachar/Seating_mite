@@ -25,10 +25,10 @@ export default function Sign() {
     });
 
     return (
-        <div className="w-full py-10 px-2 flex justify-center items-center">
+        <div className="w-full h-screen py-10 px-2 flex justify-center items-center">
             <div className="p-5 rounded">
                 <div className="">
-                    <h1 className='text-neutral-700 text-3xl font-bold'>Welcome To Seating App</h1>
+                    <h1 className='text-neutral-700 text-3xl font-bold'>Welcome To Something</h1>
                 </div>
                 <div className="py-3 flex flex-col items-center">
                    {isSignIn ? <SignIn/> : <SignUp/>} 
