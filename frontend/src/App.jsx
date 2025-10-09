@@ -7,11 +7,11 @@ import {store} from './app/store';
 import AllRequests from './components/main/AllRequests';
 import Navbar from './components/main/Navbar';
 import ExamRequest from './components/main/ExamRequest';
-import AdminPage from './components/main/admin/AdminPage';
 import AddNewExam from './components/main/admin/AddNewExam';
 import ViewExamDetails from './components/main/ViewExamDetails';
 import AllotSeats from './components/main/admin/AllotSeats';
 import CollegeData from './components/main/admin/CollegeData';
+import Allotment from './components/main/Allotment';
 
 function App() {
   
@@ -28,6 +28,7 @@ function App() {
             <Route path='/view-exam-details' element={<ViewExamDetails/>}/>
             <Route path='/allot-seats' element={<AllotSeats/>}/>
             <Route path='/college-data' element={<CollegeData/>}/>
+            <Route path='/allotment' element={<Allotment/>}/>
           </Routes>            
       </Provider>
     </div>

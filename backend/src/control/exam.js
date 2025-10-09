@@ -2,7 +2,7 @@ import Exams from "../model/exam.js";
 
 export const getExams = async (req, res) => {
     try {
-        const exams = await Exams.find().select('-eligibleStudents').lean();
+        const exams = await Exams.find().select('-eligibleStudents -allotment').lean();
 
         return res.status(200).json({exams: exams});
     } catch(err) {
@@ -101,5 +101,32 @@ export const deleteExam = async (req, res) => {
     catch(err) {
         console.log(err);
         return res.status(500).json({message: "Interval Server Error!"});
+    }
+}
+
+export const updateAllotment = async (req, res) => {
+    try {   
+        const {examId, allotment} = req.body;
+
+        const response = await Exams.findByIdAndUpdate(examId, { $set: {isAllotted: true} ,$set: {allotment: allotment}});
+
+        return res.status(200).json({message: "Allotment made Successfully!"});
+    } catch(err) {
+        console.log(err);
+        return res.status(500).json({message: "Internal Server Error"});
+    }
+}
+
+export const getAllotment = async (req, res) => {
+    try {
+        const {examId} = req.params;
+
+        const exam = await Exams.findById(examId).select("allotment").lean();
+
+        return res.status(200).json({allotment: exam.allotment});
+
+    } catch(err) {
+        console.log(err);
+        return res.status(500).json({message: "Internal Server Error"});
     }
 }

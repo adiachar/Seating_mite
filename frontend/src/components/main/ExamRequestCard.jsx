@@ -58,7 +58,15 @@ export default function ExamRequestCard({examReq, setRefresh}) {
                 size='small'
                 loading={delLoading}
                 onClick={() => navigate("/allot-seats", {state: {examReq: examReq}})}
-                >Allot Seats</Button>              
+                >Allot Seats</Button>
+
+                <Button
+                variant='outlined' 
+                color='dark'
+                size='small'
+                loading={delLoading}
+                onClick={() => navigate("/allotment", {state: {examReq: examReq}})}
+                >View Allotment</Button>           
               </>
             )}
         </div>

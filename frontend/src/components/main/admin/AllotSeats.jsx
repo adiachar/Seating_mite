@@ -168,6 +168,38 @@ export default function AllotSeats() {
 
         setCollege({...updatedCollege});
     }
+
+    const finalizeAllotment = async () => {
+        let allotment = [];
+
+        for(let building of college.buildings) {
+            if(building.isSelected) {
+                for(let floor of building.floors) {
+                    if(floor.isSelected) {
+                        for(let classRoom of floor.classRooms) {
+                            if(classRoom.isSelected) {
+                                delete classRoom.isSelected;
+                                delete classRoom._id;
+                                allotment.push({building: building.name, floor: floor.name, classRoom: classRoom});
+                            }
+                        }                        
+                    }
+                }                
+            }
+        }
+
+        try {
+            let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/exam/allotment`, {examId: examReq, allotment});
+
+            if(response.status == 200) {
+                alert("Seats Alloted Successfully!");
+            }
+            
+        } catch(err) {
+            console.log(err);
+            alert("Something went wrong!");
+        }
+    }
     
     return (
         <div className="w-full flex flex-col items-center">
@@ -240,7 +272,8 @@ export default function AllotSeats() {
                             size="small" 
                             variant="contained" 
                             onClick={() => setNoOfBatch(n => n + 1 <= noOfStudentCategories ? n + 1 : noOfStudentCategories)}>+</Button>
-                        <button onClick={allotSeat} className="px-3 py-2 rounded text-white bg-green-500">Allot Seats</button>
+                        <Button onClick={allotSeat} variant="outlined" color="success">Allot Seats</Button>
+                        <Button onClick={finalizeAllotment} variant="contained" color="success">Finalize Allotment</Button>
                     </div>
                     <div>
                         <h1 className="font-semibold text-lg text-center text-neutral-700">Selected Classes for Allotment:</h1>
