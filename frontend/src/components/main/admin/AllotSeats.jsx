@@ -3,6 +3,8 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 
 let batchTable = [];
 
@@ -205,41 +207,36 @@ export default function AllotSeats() {
         <div className="w-full flex flex-col items-center">
             {college? 
                 <div className="w-full p-5">
-                    <h1 className="font-semibold text-lg text-center text-neutral-700">Available Classes in college:</h1>
+                    <h1 className="font-semibold text-xl text-center text-gray-500">Select available classes in college</h1>
                     
-                    <div>
-                        <h1 className="">Buildings:</h1>
+                    <div className="mt-5 p-4 rounded-2xl border border-gray-200">
+                        <h1 className="p-2 text-center text-gray-600 font-semibold bg-gray-300">Buildings</h1>
                         {college.buildings.map((building, bIdx) => 
-                            <div key={bIdx} className="mt-2">
-                                <Button
-                                    size="small"
-                                    color="success"
-                                    sx={{boxShadow: "none"}}
-                                    variant={building.isSelected ? 'contained' : 'outlined'}
+                            <div key={bIdx} className="mt-5">
+                                <button
+                                    className={`px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white ${building.isSelected && 'bg-black text-white rounded-b-none'}`}
                                     onClick={(e) => handleBuildingSelection(e, bIdx)}
                                     >{building.name}
-                                </Button>
+                                </button>
                                 
                                 {building.isSelected && 
-                                    <div className="p-2 border rounded-r">    
+                                    <div className="p-2 border rounded-b-2xl">    
+                                        <h1 className="p-2 text-center text-gray-600 font-semibold bg-gray-300">Floors</h1>
                                         {building.floors.map((floor, fIdx) => 
-                                            <div key={fIdx} className="">
-                                                <Button 
-                                                    size="small"
-                                                    color="success"
-                                                    sx={{marginBottom: "0.5rem"}}
-                                                    variant={floor.isSelected ? 'contained' : 'outlined'}
+                                            <div key={fIdx} className="mt-2">
+                                                <button 
+                                                    className={`px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white ${floor.isSelected && 'bg-black text-white rounded-b-none'}`}
                                                     onClick={(e) => handleFloorSelection(e, bIdx, fIdx)}
-                                                    >{floor.name}</Button>
+                                                    >{floor.name}</button>
 
                                                 {floor.isSelected &&
-                                                    <div className='w-full mb-5 p-5 grid grid-cols-4 gap-5 place-items-center border border-neutral-500 rounded overflow-auto'>
+                                                    <div className='w-full mb-5 p-5 grid grid-cols-4 gap-5 place-items-center border border-neutral-500 rounded-b-2xl overflow-auto'>
                                                         {floor.classRooms.map((classRoom, cRIdx) => 
                                                             <div key={cRIdx}>
-                                                                <label htmlFor={`${bIdx}${fIdx}${cRIdx}`} className="px-3 py-2 bg-neutral-300 rounded flex items-center">
+                                                                <label htmlFor={`${bIdx}${fIdx}${cRIdx}`} className="px-3 py-2 bg-gray-300 rounded flex items-center">
                                                                     {classRoom.name} 
                                                                     <input 
-                                                                        className="ml-2 size-5"
+                                                                        className="ml-2 size-5 accent-black"
                                                                         id={`${bIdx}${fIdx}${cRIdx}`}
                                                                         type="checkbox"
                                                                         checked={classRoom.isSelected}
@@ -260,36 +257,53 @@ export default function AllotSeats() {
 
                         )}                            
                     </div>
-                    <div className="my-5 flex gap-2 overflow-auto">
-                        <Button 
-                            sx={{backgroundColor: "black", color: "white"}}
-                            size="small" 
-                            variant="contained" 
-                            onClick={() => setNoOfBatch(n => n - 1 >= 1 ? n - 1 : 1)}>-</Button>
-                        <input type="number" className="w-10 px-2 text-center" readOnly={true} value={noOfBatch}/>
-                        <Button 
-                            sx={{backgroundColor: "black", color: "white"}}
-                            size="small" 
-                            variant="contained" 
-                            onClick={() => setNoOfBatch(n => n + 1 <= noOfStudentCategories ? n + 1 : noOfStudentCategories)}>+</Button>
-                        <Button
-                            size="small"
-                            sx={{
-                                whiteSpace: "nowrap",
-                                minWidth: "unset"
-                            }}
-                            onClick={allotSeat} variant="outlined" color="success">Allot Seats</Button>
-                        <Button
-                            size="small"
-                            sx={{
-                                whiteSpace: "nowrap",
-                                minWidth: "unset"
-                            }} 
-                            onClick={finalizeAllotment} variant="contained" color="success">Finalize Allotment</Button>
+                    <div className="my-5 p-5 flex flex-col gap-2 overflow-auto border border-gray-600 rounded-2xl">
+                        <div className="w-fulls flex items-center gap-3">
+                            <h1>Number of branches for each Class:</h1>
+                            <div className="flex items-center">
+                                <Button 
+                                sx={{
+                                    minWidth: "auto",
+                                    padding: "0.4rem",
+                                    backgroundColor: "black", 
+                                    color: "white",
+                                    borderRadius: "1rem"
+                                }}
+                                size="small" 
+                                variant="contained" 
+                                onClick={() => setNoOfBatch(n => n - 1 >= 1 ? n - 1 : 1)}
+                                ><RemoveIcon sx={{fontSize: "1rem"}}/></Button>
+
+                                <h1 className="mx-2 px-4 py-2 text-xl bg-gray-200 rounded-2xl">{noOfBatch}</h1>
+
+                                <Button 
+                                    sx={{
+                                        minWidth: "auto",
+                                        padding: "0.4rem",
+                                        backgroundColor: "black", 
+                                        color: "white",
+                                        borderRadius: "1rem"
+                                    }}
+                                    size="small" 
+                                    variant="contained" 
+                                    onClick={() => setNoOfBatch(n => n + 1 <= noOfStudentCategories ? n + 1 : noOfStudentCategories)}
+                                    ><AddIcon sx={{fontSize: "1rem"}}/></Button> 
+                            </div>
+                            
+                        </div>
+                        <div className="flex gap-2">
+                           <button
+                                className='w-auto px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white inline-block'
+                                onClick={allotSeat} variant="outlined" color="success">Allot Seats</button>
+                            <button
+                                className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-green-600 hover:border-transparent hover:text-white flex items-center gap-2'
+                                onClick={finalizeAllotment} variant="contained" color="success">Finalize Allotment</button> 
+                        </div>
+                        
                     </div>
                     <div>
-                        <h1 className="font-semibold text-lg text-center text-neutral-700">Selected Classes for Allotment:</h1>
-                        <div>
+                        <h1 className="font-semibold text-xl text-center text-gray-500">Selected classes for Allotment</h1>
+                        <div className="border border-gray-200">
                             {college.buildings.map((building, bIdx) => 
                                 (building.isSelected ? 
                                     building.floors.map((floor, fIdx) => 

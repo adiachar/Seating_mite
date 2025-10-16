@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux';
 import {Button} from "@mui/material";
 import axios from 'axios';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 export default function CollegeData() {
     const [college, setCollege] = useState(null);
@@ -95,9 +96,30 @@ export default function CollegeData() {
         setCollege({...updatedCollege});   
     }
 
+    const deleteBuilding = async (bIdx) => {
+        let name = prompt(`Enter Building Name to Delete: '${college.buildings[bIdx].name}'`);
+
+        if(name != college.buildings[bIdx].name) {
+            alert("Wrong Building Name!");
+            return;
+        }
+
+        try {
+            let response = await axios.delete(`${import.meta.env.VITE_SERVER_URL}/college/building`, 
+                {data: {collegeId: college._id, buildingId: college.buildings[bIdx]._id}});
+            if(response.status == 200) {
+                alert("Building Removed Successfully!");
+                setRefresh(r => !r);
+            }
+        } catch(err) {
+            console.log(err);
+            alert("Something went wrong!");
+        }
+    }
+
     const saveUpdates = async (bIdx) => {
         try {
-            let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/college/update-building-data`, 
+            let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/college/building`, 
                 {collegeId: college._id, building: college.buildings[bIdx]});
             if(response.status == 200) {
                 alert("Data Saved Successfully");
@@ -113,68 +135,65 @@ export default function CollegeData() {
         <div className='w-full p-5'>
             {college ?
                 <div className='w-full'>
-                    <h1>{college.name}</h1>
-
-                    <div className='w-full p-2 border'>
+                    <h1 className='text-center font-bold text-2xl text-gray-800'>{college.name}</h1>
+                    <div className='w-full p-2 mt-5'>
                         <AddNewBuilding setRefresh={setRefresh}/>
                         <div className='w-full mt-5'>
                             {college.buildings.length != 0 ? college.buildings.map((building, bIdx) => 
-                                <div key={bIdx} className='w-full mb-3 p-3 border rounded flex flex-col items-start'>
-                                    <div className='w-full p-2 flex gap-2 my-2 bg-neutral-200'>
+                                <div key={bIdx} className='w-full mb-3 p-3 border rounded-2xl flex flex-col items-start'>
+                                    <div className='w-full p-2 flex gap-2 my-2 bg-gray-200 rounded-2xl'>
                                         {!building.edit &&
-                                            <Button
-                                                sx={{
-                                                    boxShadow: "none"
-                                                }}
-                                                color='primary'
-                                                size='small'
-                                                variant='contained' 
-                                                onClick={() => editBuilding(bIdx)}>Edit</Button>
+                                            
+                                            <button
+                                                className='px-3 py-2 text-sm cursor-pointer rounded-2xl bg-blue-600 hover:bg-blue-700 text-white transition-all'
+                                                onClick={() => editBuilding(bIdx)}>Edit</button>
+                                            
+                                        }
+                                        {building.edit && 
+                                            <button
+                                                className='px-3 py-2 text-sm cursor-pointer rounded-2xl bg-red-600 hover:bg-red-700 text-white transition-all'
+                                                onClick={() => deleteBuilding(bIdx)}>Delete</button>
                                         }
                                         {building.edit && 
                                             <>
-                                                <Button
-                                                    sx={{
-                                                        boxShadow: "none"
-                                                    }}
-                                                    color='success'
-                                                    size='small'
-                                                    variant='contained' 
-                                                    onClick={() => saveUpdates(bIdx)}>Save</Button>
+                                                <button
+                                                    className='px-3 py-2 text-sm cursor-pointer border-black rounded-2xl bg-green-600 hover:bg-green-700 text-white transition-all'
+                                                    onClick={() => saveUpdates(bIdx)}>Save</button>
 
-                                                <Button
-                                                    sx={{
-                                                        boxShadow: "none"
-                                                    }}
-                                                    color='dark'
-                                                    size='small'
-                                                    variant='outlined' 
-                                                    onClick={() => setRefresh(r => !r)}>Back</Button>                                            
+                                                <button
+                                                    className='px-3 py-2 text-sm cursor-pointer bg-gray-600 rounded-2xl text-white'
+                                                    onClick={() => setRefresh(r => !r)}>Back</button>                                            
                                             </>
                                         }                                       
                                     </div>
 
                                     <label htmlFor="" className='mb-2 flex flex-col'>
                                         Building Name:
-                                        <input type='text' name='name' placeholder='ex: main block' onChange={(e) => handleBuildingChange(e, bIdx)} value={building.name} className='bg-neutral-300 rounded px-2' readOnly={!building.edit}/>
+                                        <input type='text' name='name' placeholder='ex: main block' onChange={(e) => handleBuildingChange(e, bIdx)} value={building.name} className='px-4 py-2 text-sm bg-gray-200 rounded-2xl' readOnly={!building.edit}/>
                                     </label>
                                     <label htmlFor="" className='flex flex-col'>
                                         Number of Floors:
-                                        <input type='text' value={building.noOfFloors} className='bg-neutral-300 rounded px-2' readOnly={true}/>
+                                        <input type='text' value={building.noOfFloors} className='px-4 py-2 text-sm bg-gray-200 rounded-2xl' readOnly={true}/>
                                     </label>
                                     {
                                         building.floors.length > 0 ? building.floors.map((floor, fIdx) =>
-                                            <div key={fIdx} className='w-full mt-3 p-3 border rounded'>
-                                                <label htmlFor="" className='flex'>
+                                            <div key={fIdx} className='w-full mt-3 p-3 rounded-2xl border'>
+                                                <div className='w-full flex justify-end'>
+                                                  {building.edit && <button
+                                                        className='px-3 py-2 text-sm cursor-pointer rounded-2xl bg-red-600 hover:bg-red-700 text-white transition-all'
+                                                        onClick={() => deleteFloor(bIdx, fIdx)}>Delete Floor</button>}  
+                                                </div>
+                                                
+                                                <label htmlFor="" className='flex items-center gap-2 flex-wrap'>
                                                     Floor Name:
-                                                    <input type='text' name='name' onChange={(e) => handleFloorChange(e, bIdx, fIdx)} value={floor.name} className='ml-2 px-2 bg-neutral-300 rounded' readOnly={!building.edit}/>
+                                                    <input type='text' name='name' onChange={(e) => handleFloorChange(e, bIdx, fIdx)} value={floor.name} className='px-4 py-2 text-sm bg-gray-200 rounded-2xl' readOnly={!building.edit}/>
                                                 </label>
                                                 <div className='mt-5 w-full '>
-                                                    <h1 className='inline'>ClassRooms:</h1>
+                                                    <h1 className='mb-2 px-2'>ClassRooms:</h1>
                                                     {floor.classRooms.map((classRoom, cRIdx) => 
-                                                        <div key={cRIdx} className='w-full mb-1 p-2 flex flex-wrap gap-2 bg-neutral-200 overflow-auto'>
+                                                        <div key={cRIdx} className='w-full mb-1 px-4 py-2 flex flex-wrap items-center gap-2 bg-gray-200 overflow-auto rounded-2xl'>
                                                             <label htmlFor="" className='flex gap-2'>
-                                                                Name:
+                                                                Class Name:
                                                                 <input required type="text" name='name' onChange={(e) => handleClassChange(e, bIdx, fIdx, cRIdx)}  placeholder='Class Name'  value={classRoom.name} readOnly={!building.edit}/>
                                                             </label>
                                                             <label htmlFor="" className='flex gap-2'>
@@ -185,41 +204,28 @@ export default function CollegeData() {
                                                                 Columns:
                                                                 <input required type="number" name='columns' onChange={(e) => handleClassChange(e, bIdx, fIdx, cRIdx)}  placeholder='Columns' value={classRoom.columns} readOnly={!building.edit}/>
                                                             </label>
-                                                            {building.edit && <Button
-                                                                sx={{
-                                                                    boxShadow: "none",
-                                                                }}
-                                                                color='error'
-                                                                size='small'
-                                                                variant='outlined' 
-                                                                onClick={() => deleteClass(bIdx, fIdx, cRIdx)}>Delete</Button>}
+                                                            {building.edit && <button
+                                                                className='px-3 py-2 text-sm cursor-pointer rounded-2xl text-red-600 border border-red-600 hover:bg-red-600 hover:text-white transition-all'
+                                                                onClick={() => deleteClass(bIdx, fIdx, cRIdx)}>Delete</button>}
                                                         </div>
                                                     )}
                                                 </div>
                                                 <div className='flex gap-3'>  
-                                                    {building.edit && <Button
-                                                        sx={{
-                                                            boxShadow: "none",
-                                                        }}
-                                                        color='warning'
-                                                        size='small'
-                                                        variant='outlined' 
-                                                        onClick={() => addNewClassRoom(bIdx, fIdx)}>Add Class</Button>}
+                                                    {building.edit && <button
+                                                        className='px-2 py-1 rounded-2xl border border-black text-black hover:text-white hover:bg-black cursor-pointer flex gap-1 text-sm'
+                                                        onClick={() => addNewClassRoom(bIdx, fIdx)}><AddCircleOutlineIcon/>Add Class</button>}
 
-                                                    {building.edit && <Button
-                                                        sx={{
-                                                            boxShadow: "none",
-                                                        }}
-                                                        color='error'
-                                                        size='small'
-                                                        variant='contained' 
-                                                        onClick={() => deleteFloor(bIdx, fIdx)}>Delete</Button>}
                                                 </div>
                                                 
                                             </div>
                                         ): <h1>No Floors Added!</h1>
                                     }
-                                    {building.edit && <Button onClick={(e) => addNewFloor(bIdx)}>Add Floor</Button>}
+                                    {building.edit && 
+                                        <button 
+                                            type='button'
+                                            className='mt-5 px-2 py-1 rounded-2xl border border-black text-black hover:text-white hover:bg-black cursor-pointer flex gap-1 text-sm'
+                                            onClick={(e) => addNewFloor(bIdx)}
+                                            ><AddCircleOutlineIcon/>Add Floor</button>}
                                 </div>    
                             ): <p>No Buildings Added</p>}
                         </div>                        
@@ -279,23 +285,26 @@ function AddNewBuilding({setRefresh}) {
     const addClassRoom = (idx) => {
         if(floors.length > idx) {
             let updatedFloors = floors;
-            updatedFloors[idx].classRooms.push({...classRooms[idx]});
-            setFloors([...updatedFloors]);
+            if(classRooms[idx].name && classRooms[idx].rows && classRooms[idx].columns) {
+                updatedFloors[idx].classRooms.push({...classRooms[idx]});
+                setFloors([...updatedFloors]);
+            }
         }
     }
 
     return (
-        <div className='w-full flex flex-col'>
+        <div className='p-4 w-full flex flex-col  border rounded-2xl'>
             <h1 className='text-center'>Add New Building</h1>
-            <form onSubmit={handleFormSubmit} className='p-1 border rounded flex flex-col items-start'>
+            <form onSubmit={handleFormSubmit} className='w-full p-1 flex flex-col items-start'>
                 <label htmlFor="name" className='mb-2 flex flex-col'>
                     Building Name:
                     <input 
                         type="text" 
                         id='name' 
+                        placeholder='ex: Main Block'
                         value={building.name} 
                         required
-                        className='bg-neutral-300 rounded px-2'
+                        className='px-4 py-2 bg-gray-200 rounded-2xl text-sm'
                         onChange={(e) => setBuilding(b => {return {...b, name: e.target.value}})}/>  
                 </label>
                 
@@ -303,58 +312,77 @@ function AddNewBuilding({setRefresh}) {
                     Number of Floors:
                     <input 
                         type="number" 
+                        placeholder='No.'
                         id='noOfFloors'
-                        className='bg-neutral-300 rounded px-2'
+                        className='px-4 py-2 bg-gray-200 rounded-2xl text-sm'
                         min={0}
                         value={building.noOfFloors}
                         required
                         onChange={(e) => setBuilding(b => {return {...b, noOfFloors: e.target.value < 101 ? e.target.value : 100}})}/>  
                 </label>
+                {!building.noOfFloors && <h1 className='mt-4 text-gray-500'>No floors added...</h1>}
                 {floors.length > 0 && floors.map((obj, idx) => 
-                    <div key={idx} className='mt-3 p-3 border rounded'>
-                        <input 
-                            type="text" 
-                            className='bg-neutral-300 rounded border-0 outline-0 px-2' 
-                            placeholder='Floor Name' 
-                            value={obj.name}
-                            required
-                            onChange={(e) => setFloors(f => {f[idx].name = e.target.value; return [...f]})}/>
+                    <div key={idx} className='w-full mt-3 p-3 border rounded-2xl'>
+                        <label htmlFor="floorName" className='flex flex-wrap gap-2'>
+                            Floor Name:
+                            <input 
+                                type="text" 
+                                className='px-4 py-2 bg-gray-200 rounded-2xl text-sm'
+                                placeholder='Floor Name' 
+                                value={obj.name}
+                                required
+                                id='floorName'
+                                onChange={(e) => setFloors(f => {f[idx].name = e.target.value; return [...f]})}/>                            
+                        </label>
                         
-                        <div className='mt-2 p-2 flex flex-col items-start bg-neutral-300'>
-                            <div className='flex gap-2 flex-wrap'>
-                                <input required type="text" placeholder='Class Name' name='name' value={classRooms[idx].name} onChange={(e) => handleClassChange(e, idx)}/>
-                                <input required type="number" placeholder='Rows' name='rows' value={classRooms[idx].rows} onChange={(e) => handleClassChange(e, idx)}/>
-                                <input required type="number" placeholder='Columns' name='columns' value={classRooms[idx].columns} onChange={(e) => handleClassChange(e, idx)}/>    
+                        <div className='w-full mt-2 flex flex-wrap gap-2 items-center'>
+                            <div className='w-full px-3 py-2 flex gap-2 flex-wrap items-center bg-gray-200 rounded-2xl'>
+                                <label htmlFor="" className='flex gap-2 items-center text-nowrap overflow-auto'>
+                                    Class Name:
+                                    <input className='w-auto px-2 text-sm outline-none' required type="text" placeholder='Class Name' name='name' value={classRooms[idx].name} onChange={(e) => handleClassChange(e, idx)}/>
+                                </label>
+                                <label htmlFor="" className='flex gap-2 items-center text-nowrap overflow-auto'>
+                                    Rows:
+                                    <input className='px-2 text-sm outline-none' required type="number" placeholder='Rows' name='rows' value={classRooms[idx].rows} onChange={(e) => handleClassChange(e, idx)}/>
+                                </label>
+                                <label htmlFor="" className='flex gap-2 items-center text-nowrap overflow-auto'>
+                                    Columns:
+                                    <input className='px-2 text-sm outline-none' required type="number" placeholder='Columns' name='columns' value={classRooms[idx].columns} onChange={(e) => handleClassChange(e, idx)}/>    
+                                </label>
                             </div>
 
-                            <Button
-                                sx={{marginTop: '1rem'}}
-                                variant='contained'
-                                color='success'
-                                size='small'
+                            <button
+                                type='button'
+                                className='px-2 py-1 rounded-2xl border border-black text-black hover:text-white hover:bg-black cursor-pointer flex gap-1 text-sm'
                                 onClick={() => addClassRoom(idx)}
-                                >Add Class</Button>
+                                ><AddCircleOutlineIcon/>Add Class</button>
                         </div>
-                        <div className='mt-2 bg-neutral-300'>
+                        
+                        <div className='w-full mt-2'>
                             {obj.classRooms && obj.classRooms.length > 0 ?
                                 obj.classRooms.map((c, idx) => 
-                                    <div key={idx} className='p-2 flex'>
-                                        <p className='px-2 bg-neutral-400 rounded mx-1'><span className='font-bold'>Name:</span>{c.name}</p>
-                                        <p className='px-2 bg-neutral-400 rounded mx-1'><span className='font-bold'>Rows:</span>{c.rows}</p>
-                                        <p className='px-2 bg-neutral-400 rounded mx-1'><span className='font-bold'>Columns:</span>{c.columns}</p>
+                                    <div key={idx} className='w-full mb-1 px-3 py-2 text-sm flex flex-wrap lg:flex-nowrap md:flex-nowrap gap-2 bg-gray-200 overflow-auto rounded-2xl'>
+                                        <label htmlFor="" className='flex gap-2'>
+                                            Name:
+                                            <input type="text" name='name' value={c.name} readOnly={!building.edit}/>
+                                        </label>
+                                        <label htmlFor="" className='flex gap-2'>
+                                            Rows:
+                                            <input type="text" name='name' value={c.rows} readOnly={!building.edit}/>
+                                        </label>
+                                        <label htmlFor="" className='flex gap-2'>
+                                            Columns:
+                                            <input type="text" name='name' value={c.columns} readOnly={!building.edit}/>
+                                        </label>
                                     </div>
                                 )                                
-                                : <h1>No class rooms added!</h1>}                            
+                                : null}                            
                         </div>
                     </div>
                 )}
-                <Button
-                    sx={{marginTop: '1rem'}}
-                    variant='contained'
-                    color='success'
-                    size='small'
-                    type='submit'
-                    >Submit</Button>
+                <button
+                    className='mt-4 px-3 py-2 text-sm cursor-pointer rounded-2xl bg-green-600 hover:bg-green-700 text-white transition-all'
+                    >Submit</button>
             </form>            
         </div>
     );

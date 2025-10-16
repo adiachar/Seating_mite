@@ -90,4 +90,16 @@ export const updateBuildingData = async (req, res) => {
         console.log(err);
         return res.status(500).json({message: "Internal Server Error!"});
     } 
+} 
+
+export const deleteBuilding = async (req, res) => {
+    try {
+        const {collegeId, buildingId} = req.body;
+        const response = await College.updateOne({_id: collegeId}, {$pull : {buildings: {_id: buildingId}}});
+        return res.status(200).json({message: "Building Deleted Successfully!"});
+
+    } catch(err) {
+        console.log(err);
+        return res.status(500).json({message: "Internal Server Error!"});
+    }
 }

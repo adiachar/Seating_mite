@@ -4,6 +4,11 @@ import {useState} from 'react'
 import axios from 'axios';
 import ExelFileInput from './ExelFileInput';
 import { useNavigate } from 'react-router-dom';
+import InfoIcon from '@mui/icons-material/Info';
+import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import BallotIcon from '@mui/icons-material/Ballot';
 
 export default function ExamRequestCard({examReq, setRefresh}) {
   const user = useSelector(state => state.user);
@@ -29,64 +34,39 @@ export default function ExamRequestCard({examReq, setRefresh}) {
   }
 
   return (
-    <div className='w-full p-5 border border-gray-300 rounded shadow hover:shadow-lg transition-shadow'>
+    <div className='w-full p-5 border border-gray-300 rounded-2xl shadow hover:shadow-lg transition-shadow'>
+
         <h3 className='py-1 px-2 font-semibold rounded bg-neutral-300 inline'>{examReq.examType} - {examReq.year}</h3>
-        <div className='w-full mt-3 flex gap-3 overflow-x-auto'>
+        <div className='w-full mt-3 p-2 flex gap-3 overflow-x-auto'>
             <button 
-              className='px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-nowrap'
+              className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white flex items-center gap-2'
               onClick={() => navigate('/view-exam-details', {state: {examReq: examReq}})}
-              >View Details</button>
+              ><InfoIcon/> <p>View Details</p></button>
             {(user.type === 'admin' || user.type === 'coordinator') && (
               <button 
-                className='px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors text-nowrap'
+                className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white flex items-center gap-2'
                 onClick={() => setAddStudents(as => !as)}
-                >Add Eligible Students</button>
+                ><PersonAddAlt1Icon/>Add Eligible Students</button>
             )}
             {(user.type === 'admin') && (
               <>
-                <Button
-                  variant='outlined' 
-                  color='error'
-                  size='small'
-                  sx={{
-                    whiteSpace: 'nowrap',
-                    width: 'auto',
-                    minWidth: 'unset',
-                    padding: '0.3rem 1rem',
-                  }}
-                  loading={delLoading}
-                  onClick={() => deleteExamRequest()}
-                  >Delete Request</Button>
-
-                <Button
-                variant='outlined' 
-                color='dark'
-                size='small'
-                sx={{
-                    whiteSpace: 'nowrap',
-                    width: 'auto',
-                    minWidth: 'unset',
-                    padding: '0.3rem 1rem',
-                  }}
+            <button 
+                className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-red-700 hover:border-transparent hover:text-white flex items-center gap-2'
                 loading={delLoading}
-                onClick={() => navigate("/allot-seats", {state: {examReq: examReq}})}
-                >Allot Seats</Button>
+                onClick={() => deleteExamRequest()}
+                ><DeleteIcon/>Delete Request</button>
 
-                <Button
-                variant='outlined' 
-                color='dark'
-                size='small'
-                sx={{
-                    whiteSpace: 'nowrap',
-                    width: 'auto',
-                    minWidth: 'unset',
-                    padding: '0.3rem 1rem',
-                  }}
-                loading={delLoading}
-                onClick={() => navigate("/allotment", {state: {examReq: examReq}})}
-                >View Allotment</Button>           
+                <button
+                  className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white flex items-center gap-2'
+                  onClick={() => navigate("/allot-seats", {state: {examReq: examReq}})}
+                ><CheckCircleIcon/>Allot Seats</button>         
               </>
             )}
+            <button
+                  className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-green-600 hover:border-transparent hover:text-white flex items-center gap-2'
+                  loading={true}
+                  onClick={() => navigate("/allotment", {state: {examReq: examReq}})}
+                ><BallotIcon/>View Allotment</button>  
         </div>
         {((user.type === 'admin' || user.type === 'coordinator') && addStudents) && <AddEligibleStudents examReq={examReq}/>}
     </div>
