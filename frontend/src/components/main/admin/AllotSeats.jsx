@@ -2,43 +2,29 @@ import { Button } from "@mui/material";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 
 let batchTable = [];
 
 export default function AllotSeats() {
+    const collegeData = useSelector(state => state.college);
     const [college, setCollege] = useState(null);
     const examRequest = useLocation().state.examReq;
     const [examReq, setExamReq] = useState(null);
     const user = useSelector(state => state.user);
     const [noOfBatch, setNoOfBatch] = useState(2);
     const [noOfStudentCategories, setNoOfStudentCategories] = useState(0);
+    const navigate = useNavigate();
 
     const getCollegeData = async () => {
-        if(!user) {
-            return;
-        }
-
-        try {
-            const collegeId = user.college;
-            const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${collegeId}`);
-
-            if(response.status === 200) {
-
-                let currentCollege = response.data.college;
-                currentCollege.buildings = currentCollege.buildings.map(building => 
-                    {return {...building, isSelected: false, floors: building.floors.map(floor => 
-                        {return {...floor, isSelected: false, classRooms: floor.classRooms.map(classRoom => 
-                            {return {...classRoom, isSelected: false, seats: Array.from({length: classRoom.rows}, () => Array(classRoom.columns).fill(0))}})}})}});
-
-                setCollege(currentCollege);
-                
-            }
-        } catch(err) {
-            console.log(err);
-        }
+        let currentCollege = {...collegeData};
+            currentCollege.buildings = currentCollege.buildings.map(building => 
+                {return {...building, isSelected: false, floors: building.floors.map(floor => 
+                    {return {...floor, isSelected: false, classRooms: floor.classRooms.map(classRoom => 
+                        {return {...classRoom, isSelected: false, seats: Array.from({length: classRoom.rows}, () => Array(classRoom.columns).fill(0))}})}})}});
+        setCollege(currentCollege);
     }
 
     const getEligibleStudents = async (examRequest) => {
@@ -53,7 +39,12 @@ export default function AllotSeats() {
     }
 
     useEffect(() => {
+        if(!collegeData?._id) {
+            navigate('/home');
+        }
+
         getCollegeData();
+
         if(examRequest._id) {
             getEligibleStudents(examRequest);
             
@@ -100,7 +91,7 @@ export default function AllotSeats() {
     }
 
     const createBatch = () => {
-        let stdCategory = examReq.eligibleStudents.map((elStd) => {return {batch: `${elStd.branch}-${elStd.semester}`, students: elStd.students}});
+        let stdCategory = examReq.eligibleStudents.map((elStd) => {return {...elStd}});
         let eachBatchSize = parseInt(( stdCategory.length / noOfBatch ) + ( stdCategory.length % noOfBatch ));
         let batches = Array.from({length: noOfBatch}, (_) => Array());
         
@@ -115,7 +106,7 @@ export default function AllotSeats() {
 
             let updatedBatch = [];
             for(let stdCat of batches[i]) {
-                updatedBatch = [...updatedBatch, ...stdCat.students];
+                updatedBatch = [...updatedBatch, ...stdCat.students.map(std => {return {branch: stdCat.branch, semester: stdCat.semester, subject: stdCat.subject, usn: std}})];
             }
 
             batches[i] = updatedBatch;
@@ -136,6 +127,11 @@ export default function AllotSeats() {
     }
 
     const allotSeat = () => {
+        if(examReq?.eligibleStudents?.length === 0) {
+            alert("No Eligible Students Added!");
+            return;
+        }
+
         createBatch();
         
         let updatedCollege = college;
@@ -155,7 +151,7 @@ export default function AllotSeats() {
                                     }
                                     
                                     for(let i = 0; i < floor.classRooms[room].rows; i++) {
-                                        seats[i][j] = (btr[btc] < batchTable.length && batchTable[btr[btc]][btc]) ? batchTable[btr[btc]++][btc] : 0;
+                                        seats[i][j] = (btr[btc] < batchTable.length && batchTable[btr[btc]][btc]) ? batchTable[btr[btc]++][btc] : {usn: 0};
                                     }
                                     btc++;
                                 }
@@ -163,7 +159,6 @@ export default function AllotSeats() {
                             }
                         }                         
                     }
-                   
                 }
             }
         }
@@ -208,7 +203,6 @@ export default function AllotSeats() {
             {college? 
                 <div className="w-full p-5">
                     <h1 className="font-semibold text-xl text-center text-gray-500">Select available classes in college</h1>
-                    
                     <div className="mt-5 p-4 rounded-2xl border border-gray-200">
                         <h1 className="p-2 text-center text-gray-600 font-semibold bg-gray-300">Buildings</h1>
                         {college.buildings.map((building, bIdx) => 
@@ -246,15 +240,11 @@ export default function AllotSeats() {
                                                         )}
                                                     </div>   
                                                 }
-
                                             </div>
-
                                         )}
                                     </div>    
                                 }                                    
-                                
                             </div>
-
                         )}                            
                     </div>
                     <div className="my-5 p-5 flex flex-col gap-2 overflow-auto border border-gray-600 rounded-2xl">
@@ -262,16 +252,16 @@ export default function AllotSeats() {
                             <h1>Number of branches for each Class:</h1>
                             <div className="flex items-center">
                                 <Button 
-                                sx={{
-                                    minWidth: "auto",
-                                    padding: "0.4rem",
-                                    backgroundColor: "black", 
-                                    color: "white",
-                                    borderRadius: "1rem"
-                                }}
-                                size="small" 
-                                variant="contained" 
-                                onClick={() => setNoOfBatch(n => n - 1 >= 1 ? n - 1 : 1)}
+                                    sx={{
+                                        minWidth: "auto",
+                                        padding: "0.4rem",
+                                        backgroundColor: "black", 
+                                        color: "white",
+                                        borderRadius: "1rem"
+                                    }}
+                                    size="small" 
+                                    variant="contained" 
+                                    onClick={() => setNoOfBatch(n => n - 1 >= 1 ? n - 1 : 1)}
                                 ><RemoveIcon sx={{fontSize: "1rem"}}/></Button>
 
                                 <h1 className="mx-2 px-4 py-2 text-xl bg-gray-200 rounded-2xl">{noOfBatch}</h1>
@@ -287,7 +277,7 @@ export default function AllotSeats() {
                                     size="small" 
                                     variant="contained" 
                                     onClick={() => setNoOfBatch(n => n + 1 <= noOfStudentCategories ? n + 1 : noOfStudentCategories)}
-                                    ><AddIcon sx={{fontSize: "1rem"}}/></Button> 
+                                ><AddIcon sx={{fontSize: "1rem"}}/></Button> 
                             </div>
                             
                         </div>
@@ -299,7 +289,6 @@ export default function AllotSeats() {
                                 className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-green-600 hover:border-transparent hover:text-white flex items-center gap-2'
                                 onClick={finalizeAllotment} variant="contained" color="success">Finalize Allotment</button> 
                         </div>
-                        
                     </div>
                     <div>
                         <h1 className="font-semibold text-xl text-center text-gray-500">Selected classes for Allotment</h1>
@@ -331,7 +320,7 @@ export default function AllotSeats() {
                                                         <div 
                                                             className={`w-full mt-3 grid row-auto gap-2 place-items-center overflow-auto`}
                                                             style={{gridTemplateColumns: `repeat(${classRoom.columns}, auto)`}}>
-                                                            {classRoom.seats.map( row => row.map((col, idx) => <div key={idx} className="w-full p-5 bg-neutral-200">{col == 0 ? '-' : col}</div>))}
+                                                            {classRoom.seats.map( row => row.map((obj, idx) => <div key={idx} className="w-full p-5 bg-neutral-200">{obj.usn == 0 ? '-' : obj.usn}</div>))}
                                                         </div>
                                                     </div>) : null
                                                 )   
@@ -340,7 +329,6 @@ export default function AllotSeats() {
                                     ) : null
                                 )
                             )}
-                            
                         </div>
                     </div>   
                 </div>         

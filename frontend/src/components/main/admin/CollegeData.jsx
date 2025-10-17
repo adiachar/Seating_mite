@@ -1,115 +1,121 @@
 import { useState, useEffect } from 'react'
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { setCollege } from '../../../features/seatingSlice';
 import {Button} from "@mui/material";
 import axios from 'axios';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 export default function CollegeData() {
-    const [college, setCollege] = useState(null);
+    const collegeData = useSelector(state => state.college);
     const user = useSelector(state => state.user);
-    const [refresh, setRefresh] = useState(false);
+    const [collegeDataCopy, setCollegeDataCopy] = useState({});
+    const [currRefresh, setCurrRefresh] = useState(false);
+    const dispatch = useDispatch();
 
-    const getCollegeData = async () => {
-        if(!user) {
-            return;
-        }
 
+    const getCollege = async () => {
         try {
-            const collegeId = user.college;
-            const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${collegeId}`);
-
+            const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${user.college}`);
             if(response.status === 200) {
-                let collegeData = response.data.college;
-                collegeData.buildings = collegeData.buildings.map((building) => {return {...building, edit: false}});
-                setCollege(collegeData);
+                dispatch(setCollege(response.data.college));
             }
         } catch(err) {
             console.log(err);
+            alert("Got error from the server while getting the college data");
         }
     }
 
     useEffect(() => {
-        getCollegeData();
-    }, [refresh]);
+
+        if(!collegeData?._id) {
+            return;
+        }
+        let tempCollegeData = JSON.parse(JSON.stringify(collegeData));
+        
+        for(let building of tempCollegeData.buildings) {
+            building.edit = false;
+        }
+
+        setCollegeDataCopy({...tempCollegeData});
+    }, [collegeData, currRefresh]);
 
     const editBuilding = (bIdx) => {
-        let updatedCollege = college;
+        let updatedCollege = collegeDataCopy;
         updatedCollege.buildings[bIdx].edit = !updatedCollege.buildings[bIdx].edit;
 
-        setCollege({...updatedCollege});
+        setCollegeDataCopy({...updatedCollege});
     }
 
     const handleBuildingChange = (e, bIdx) => {
-        let updatedCollege = college;
+        let updatedCollege = collegeDataCopy;
         updatedCollege.buildings[bIdx][e.target.name] = e.target.value;
 
-        setCollege({...updatedCollege});
+        setCollegeDataCopy({...updatedCollege});
     }
 
     const handleFloorChange = (e, bIdx, fIdx) => {
-        let updatedCollege = college;
+        let updatedCollege = collegeDataCopy;
         updatedCollege.buildings[bIdx].floors[fIdx][e.target.name] = e.target.value;
 
-        setCollege({...updatedCollege});
+        setCollegeDataCopy({...updatedCollege});
     }
 
     const handleClassChange = (e, bIdx, fIdx, cRIdx) => {
-        let updatedCollege = college;
+        let updatedCollege = collegeDataCopy;
         updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx][e.target.name] = e.target.value;
 
-        setCollege({...updatedCollege});
+        setCollegeDataCopy({...updatedCollege});
     }
 
     const addNewFloor = (bIdx) => {
-        let updatedCollege = college;
+        let updatedCollege = collegeDataCopy;
 
         if(updatedCollege.buildings[bIdx].floors[updatedCollege.buildings[bIdx].floors.length - 1].name != '') {
             updatedCollege.buildings[bIdx].floors.push({name: '', classRooms: [{name: '', rows: '', columns: ''}]});
         }
 
-        setCollege({...updatedCollege});
+        setCollegeDataCopy({...updatedCollege});
     }
 
     const addNewClassRoom = (bIdx, fIdx) => {
-        let updatedCollege = college;
+        let updatedCollege = collegeDataCopy;
 
-        if(updatedCollege.buildings[bIdx].floors[fIdx].classRooms[updatedCollege.buildings[bIdx].floors[fIdx].classRooms.length - 1].name != '') {
+        if(updatedCollege.buildings[bIdx].floors[fIdx].classRooms.length === 0 || updatedCollege.buildings[bIdx].floors[fIdx].classRooms[updatedCollege.buildings[bIdx].floors[fIdx].classRooms.length - 1].name != '') {
             updatedCollege.buildings[bIdx].floors[fIdx].classRooms.push({name: '', rows: '', columns: ''});
         }
 
-        setCollege({...updatedCollege});
+        setCollegeDataCopy({...updatedCollege});
     }
 
     const deleteClass = (bIdx, fIdx, cRIdx) => {
-        let updatedCollege = college;
+        let updatedCollege = collegeDataCopy;
 
-        delete updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx];
-
-        setCollege({...updatedCollege});
+        updatedCollege.buildings[bIdx].floors[fIdx].classRooms.splice(cRIdx, 1);
+        setCollegeDataCopy({...updatedCollege});
     }
 
     const deleteFloor = (bIdx, fIdx) => {
-        let updatedCollege = college;
+        let updatedCollege = collegeDataCopy;
 
         delete updatedCollege.buildings[bIdx].floors[fIdx];
 
-        setCollege({...updatedCollege});   
+        setCollegeDataCopy({...updatedCollege});   
     }
 
     const deleteBuilding = async (bIdx) => {
-        let name = prompt(`Enter Building Name to Delete: '${college.buildings[bIdx].name}'`);
+        let name = prompt(`Enter Building Name to Delete: '${collegeDataCopy.buildings[bIdx].name}'`);
 
-        if(name != college.buildings[bIdx].name) {
+        if(name != collegeDataCopy.buildings[bIdx].name) {
             alert("Wrong Building Name!");
             return;
         }
 
         try {
             let response = await axios.delete(`${import.meta.env.VITE_SERVER_URL}/college/building`, 
-                {data: {collegeId: college._id, buildingId: college.buildings[bIdx]._id}});
+                {data: {collegeId: collegeDataCopy._id, buildingId: collegeDataCopy.buildings[bIdx]._id}});
             if(response.status == 200) {
                 alert("Building Removed Successfully!");
-                setRefresh(r => !r);
+                getCollege();
             }
         } catch(err) {
             console.log(err);
@@ -120,10 +126,10 @@ export default function CollegeData() {
     const saveUpdates = async (bIdx) => {
         try {
             let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/college/building`, 
-                {collegeId: college._id, building: college.buildings[bIdx]});
+                {collegeId: collegeDataCopy._id, building: collegeDataCopy.buildings[bIdx]});
             if(response.status == 200) {
                 alert("Data Saved Successfully");
-                setRefresh(r => !r);
+                getCollege();
             }
         } catch(err) {
             console.log(err);
@@ -133,13 +139,13 @@ export default function CollegeData() {
 
     return (
         <div className='w-full p-5'>
-            {college ?
+            {collegeDataCopy?._id ?
                 <div className='w-full'>
-                    <h1 className='text-center font-bold text-2xl text-gray-800'>{college.name}</h1>
+                    <h1 className='text-center font-bold text-2xl text-gray-700'>{collegeDataCopy.name}</h1>
                     <div className='w-full p-2 mt-5'>
-                        <AddNewBuilding setRefresh={setRefresh}/>
+                        <AddNewBuilding getCollege={getCollege}/>
                         <div className='w-full mt-5'>
-                            {college.buildings.length != 0 ? college.buildings.map((building, bIdx) => 
+                            {collegeDataCopy.buildings.length != 0 ? collegeDataCopy.buildings.map((building, bIdx) => 
                                 <div key={bIdx} className='w-full mb-3 p-3 border rounded-2xl flex flex-col items-start'>
                                     <div className='w-full p-2 flex gap-2 my-2 bg-gray-200 rounded-2xl'>
                                         {!building.edit &&
@@ -162,7 +168,7 @@ export default function CollegeData() {
 
                                                 <button
                                                     className='px-3 py-2 text-sm cursor-pointer bg-gray-600 rounded-2xl text-white'
-                                                    onClick={() => setRefresh(r => !r)}>Back</button>                                            
+                                                    onClick={() => setCurrRefresh(r => !r)}>Back</button>                                            
                                             </>
                                         }                                       
                                     </div>
@@ -194,15 +200,15 @@ export default function CollegeData() {
                                                         <div key={cRIdx} className='w-full mb-1 px-4 py-2 flex flex-wrap items-center gap-2 bg-gray-200 overflow-auto rounded-2xl'>
                                                             <label htmlFor="" className='flex gap-2'>
                                                                 Class Name:
-                                                                <input required type="text" name='name' onChange={(e) => handleClassChange(e, bIdx, fIdx, cRIdx)}  placeholder='Class Name'  value={classRoom.name} readOnly={!building.edit}/>
+                                                                <input required type="text" name='name' onChange={(e) => handleClassChange(e, bIdx, fIdx, cRIdx)}  placeholder='Class Name'  value={classRoom?.name} readOnly={!building.edit}/>
                                                             </label>
                                                             <label htmlFor="" className='flex gap-2'>
                                                                 Rows:
-                                                                <input required type="number" name='rows' onChange={(e) => handleClassChange(e, bIdx, fIdx, cRIdx)} placeholder='Rows' value={classRoom.rows} readOnly={!building.edit}/>
+                                                                <input required type="number" name='rows' onChange={(e) => handleClassChange(e, bIdx, fIdx, cRIdx)} placeholder='Rows' value={classRoom?.rows} readOnly={!building.edit}/>
                                                             </label>
                                                             <label htmlFor="" className='flex gap-2'>
                                                                 Columns:
-                                                                <input required type="number" name='columns' onChange={(e) => handleClassChange(e, bIdx, fIdx, cRIdx)}  placeholder='Columns' value={classRoom.columns} readOnly={!building.edit}/>
+                                                                <input required type="number" name='columns' onChange={(e) => handleClassChange(e, bIdx, fIdx, cRIdx)}  placeholder='Columns' value={classRoom?.columns} readOnly={!building.edit}/>
                                                             </label>
                                                             {building.edit && <button
                                                                 className='px-3 py-2 text-sm cursor-pointer rounded-2xl text-red-600 border border-red-600 hover:bg-red-600 hover:text-white transition-all'
@@ -237,7 +243,7 @@ export default function CollegeData() {
 }
 
 
-function AddNewBuilding({setRefresh}) {
+function AddNewBuilding({getCollege}) {
     const [building, setBuilding] = useState({name: "", noOfFloors: 0});
     const [floors, setFloors] = useState([]);
     const [classRooms, setClassRooms] = useState([]);
@@ -252,7 +258,7 @@ function AddNewBuilding({setRefresh}) {
             let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/college/add-building`, {building: newBuilding, collegeId: user.college});
             if(response.status == 200) {
                 alert("Added New Building Successfully!");
-                setRefresh(r => !r);
+                getCollege();
             }
         } catch(err) {
             console.log(err);

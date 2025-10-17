@@ -2,10 +2,10 @@ import {Schema, model} from "mongoose";
 
 const examSchema = new Schema([
     {
-        year: {type: Number, required: true},
-        examType: {type: String, required: true, enum: ['IA1', 'IA2', 'IA3', 'SE1', 'SE2']},
+        date: {type: Date, required: true},
+        type: {type: String, required: true, enum: ['IA1', 'IA2', 'IA3', 'SE1', 'SE2']},
         eligibleStudents: [
-            {branch: String, semester: String, batch: String, students: [String]}
+            {branch: {type: String, required: true}, semester: {type: Number, required: true}, subject: {type: String, required: true}, students: [String]}
         ],
         isAllotted: {type: Boolean, default: false},
         allotment: [
@@ -16,11 +16,16 @@ const examSchema = new Schema([
                     name: {type: String, required: true},
                     rows: {type: Number, required: true},
                     columns: {type: Number, required: true},
-                    seats: [[String]]
-
+                    seats: [[{
+                        usn: {type: String, required: true}, 
+                        branch: {type: String, required: true},
+                        subject: {type: String, required: true},
+                        semester: {type: String, required: true},
+                    }]]
                 }
             }
-        ]
+        ],
+        createdOn: {type: Date, default: Date.now}
     }
 ]);
 

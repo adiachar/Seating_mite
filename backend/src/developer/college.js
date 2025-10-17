@@ -18,7 +18,7 @@ const colleges = [{
     name: "Mangalore Institute of Technology and Engineering",
     shortName: "MITE",
     departments: {ISE: "Information Science and Engineering", CSE: "Computer Science and Engineering",},
-    examTypes: [],
+    examTypes: ['IA1', 'IA2', 'IA3', 'SE1', 'SE2'],
     buildings: []
 }];
 
@@ -28,14 +28,15 @@ const deleteAllColleges = async () => {
     return response;
 }
 
-const addColleges = async (colleges) => {
+const addCollege = async (college) => {
     try {
-        await deleteAllColleges();
-        const reponse = await College.insertMany(colleges);   
+        const newCollege = new College(college);   
+        await newCollege.save();
         console.log("Success!");
     } catch(err) {
         console.log(err);
     }
 }
 
-addColleges(colleges);
+
+addCollege(colleges[0]);

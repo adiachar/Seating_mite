@@ -23,7 +23,6 @@ export default function Navbar() {
         }        
       }
       catch(err) {
-        console.log(err);
         navigate("/sign");
       }
     }
@@ -53,9 +52,10 @@ export default function Navbar() {
   }
 
   return (
-    <div>
-      {user?._id && college._id ? <div className='navbar min-h-21 w-full px-5 py-3 flex items-center shadow shadow-gray-400 text-gray-800'>
-        {user?.type === 'student' && 
+    <div className=''>
+      {user?._id && college._id ? 
+      <div className='navbar min-h-21 w-full px-5 py-3 flex items-center justify-between shadow shadow-gray-400 text-gray-800'>
+
         <div className='flex items-center gap-3'>
           <span 
             className="material-symbols-outlined p-2 bg-blue-600 text-white rounded-xl"
@@ -63,37 +63,18 @@ export default function Navbar() {
             import_contacts
           </span>
           <div className='flex flex-col gap-1'>
-            <h1 className='font-semibold text-xl'>{college.shortName} - Student Portal</h1>
+            <h1 className='font-semibold text-xl'>{college.shortName} - {user?.type == 'student' ? "Student Portal" : user?.type == 'admin' ? "Admin Portal" : 'Coordinator Portal'}</h1>
             <p className='text-sm text-gray-400 font-normal'>{college.name}</p>
           </div>
-        </div>}
-        {/* user?._id && <ul className='mr-2 flex gap-2 text-md cursor-pointer overflow-auto'>
-          <li 
-            className='px-3 py-2 transition-all text-nowrap rounded-2xl hover:bg-black hover:text-white'
-            onClick={() => navigate("/")}
-            >Home</li>
-          {user?.type != 'student' && 
-            <li 
-              onClick={() => navigate("/all-requests")}
-              className='px-3 py-2 transition-all text-nowrap rounded-2xl hover:bg-black hover:text-white'
-              >All Requests</li>}
-          {user?.type === 'admin' && 
-            <>
-              <li 
-                onClick={() => navigate("/add-exam-request")}
-                className='px-3 py-2 transition-all text-nowrap rounded-2xl hover:bg-black hover:text-white'
-                >Add Exam Request
-              </li>
-              <li 
-                onClick={() => navigate("/college-data")}
-                className='px-3 py-2 transition-all text-nowrap rounded-2xl hover:bg-black hover:text-white'
-                >College Data
-              </li>
-            </>
-          }
-          <li className='px-3 py-2 transition-all text-nowrap rounded-2xl hover:bg-black hover:text-white'>About</li>
-          <li className='px-3 py-2 transition-all text-nowrap rounded-2xl hover:bg-black hover:text-white'>Help</li>
-        </ul> */}
+        </div>
+
+        <div className='justify-self-end'>
+          <button 
+            onClick={() => {localStorage.clear(); dispatch(setUser({})); dispatch(setCollege({})); navigate('/sign')}}
+            className='px-3 py-2 border rounded-xl '>
+            Log out
+          </button>
+        </div>
       </div> : null}
     </div>
   )

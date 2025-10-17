@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 
 
-export default function ExelFileInput({data, setData}) {
+export default function ExelFileInput({setData}) {
     function handleFileUpload(event) {
         const render = new FileReader();
         render.readAsArrayBuffer(event.target.files[0]);
@@ -18,7 +18,7 @@ export default function ExelFileInput({data, setData}) {
 
     return (
         <input 
-            className='w-12/12 mb-3 p-2 border border-gray-300 rounded'
+            className='w-full mb-3 p-2 border border-gray-300 rounded-2xl bg-gray-100 text-sm'
             type="file" 
             accept='.xlsx, xls'
             onChange={handleFileUpload}

@@ -43,7 +43,6 @@ export default function ViewExamDetails() {
                 <h2 className='my-2 block text-center text-xl text-neutral-600 font-extrabold'>Eligible Students:</h2>
                 <ul>
                     {examReq.eligibleStudents.map((elStudents, idx) => 
-                        
                         <li key={idx} className='p-2 mb-2 border rounded'>
                             <div>
                                 <div className='mb-2 flex flex-wrap gap-2'>

@@ -1,61 +1,67 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import { Button } from '@mui/material';
 import axios from 'axios';
 import {useSelector} from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 
-export default function AddNewExam() {
-    const [year, setYear] = useState(2025);
+export default function AddNewExam({setRefresh, refresh}) {
+    const [date, setDate] = useState('');
     const examTypes = useSelector(state => state.college.examTypes);
-    const [examType, setExamType] = useState(examTypes[0]);
+    const [type, setType] = useState({});
     const [loading, setLoading] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
-    const navigate = useNavigate();
+
+    useEffect(() => {
+        if(examTypes) {
+            setType(examTypes[0]);
+        }
+    }, [refresh]);
 
     const submitData = async (e) => {
         e.preventDefault();
         setLoading(true);
 
-        if(!year || !examType) {
+        if(!date || !type) {
             alert("Please fill all the fields!");
             setLoading(false);
             return;
         }
 
         try {
-            let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add`, {year, examType});
+            let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add`, {date, type});
             if(response.status === 200) {
                 alert("Exam Added Successfully!");
                 setLoading(false);
+                setRefresh(r => !r);
             } else {
                 alert("Something went wrong!");
                 setLoading(false);
+                setRefresh(r => !r);
             }            
         } catch (error) {
             console.log(error);
-            alert("Something went wrong!");
+            alert(error.message);
             setLoading(false);
+            setRefresh(r => !r);
         }
     }
 
     return (
-        <div className='w-11/12 mx-auto mt-10 p-5 border border-gray-300 rounded shadow'>
-            <form onSubmit={submitData} className='w-full flex flex-col flex-wrap gap-3 justify-center'>
-                <label htmlFor="">
-                    Year:
+        <div className='w-full mt-10 mb-6 p-5 bg-white border border-gray-300 rounded-2xl'>
+            <h1 className='mb-2 text-center'>Add New Exam</h1>
+            <form onSubmit={submitData} className='flex flex-col flex-wrap gap-3'>
+                <label htmlFor="" className='flex flex-col self-start'>
+                    Date of Exam
                     <input
-                        min={2000}
-                        max={2100} 
-                        className='w-12/12 mb-3 p-2 border border-gray-300 rounded'
-                        type='number' name='year' required placeholder='Year' value={year} onChange={e => setYear(e.target.value)}/>                    
+                        className='min-w-50 mt-1 mb-3 p-2 border border-gray-300 rounded-2xl bg-gray-100 text-sm'
+                        type='date' name='date' required placeholder='Exter exam date' value={date} onChange={e => setDate(e.target.value)}/>                    
                 </label>
 
-                <label htmlFor="">
-                    Exam Type:
+                <label htmlFor="" className='flex flex-col self-start'>
+                    Exam Type
                     <select 
-                        className='w-12/12 mb-3 p-2 border border-gray-300 rounded'
-                        type="text" name='examType' required placeholder='Exam Type' value={examType} onChange={e => setExamType(e.target.value)}>
-                        {examTypes.map((type, index) => (
+                        className='min-w-50 mt-1 mb-3 p-2 border border-gray-300 rounded-2xl bg-gray-100 text-sm'
+                        type="text" name='type' required placeholder='Exam Type' value={type} onChange={e => setType(e.target.value)}>
+                        {examTypes?.map((type, index) => (
                             <option key={index} value={type}>{type}</option>
                         ))}
                     </select>                    
@@ -69,13 +75,15 @@ export default function AddNewExam() {
                         variant='outlined' 
                         color="dark" 
                         sx={{
-                            padding: "0.5rem 3rem",
-                            backgroundColor: "#142424",
-                            color: "white",
+                            padding: "0.3rem 0.5rem",
+                            textTransform: "capitalize",
+                            borderRadius: "1rem",
+                            color: "black",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             boxShadow: "none",
+                            ":hover": {backgroundColor: "#16A34A", color: "white"}
                         }}
                         >Submit</Button>                        
                 </div>

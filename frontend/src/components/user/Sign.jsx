@@ -17,9 +17,9 @@ export default function Sign() {
 
     useEffect(() => {
         if(user?._id) {
-            navigate('/');
+            navigate('/home');
         }
-    });
+    }, []);
 
     return (
         <div className={`w-full h-full  py-2 px-2 flex justify-center items-center bg-gradient-to-br ${userType === 'student' ? 'from-blue-600 to-sky-600': userType === 'coordinator' ? 'from-purple-600 to-pink-500': 'from-red-600 to-orange-500'}`}>
@@ -328,7 +328,8 @@ function SignUp({userType}) {
                     dispatch(setUser(response.data.user));
                     dispatch(setHeader(response.data.token));
                     dispatch(setCollege(college));
-                    navigate("/");
+                    setLoading(false);
+                    navigate("/home");
                 }
 
             } catch (err) {
@@ -828,7 +829,7 @@ function StudentSignIn() {
                     dispatch(setUser(response.data.user));
                     dispatch(setHeader(response.data.token));
                     getCollege(response.data.user);
-                    navigate("/");
+                    navigate("/home");
                 }
             } catch (err) {
                 if(err.response) {
