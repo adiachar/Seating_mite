@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import RequestCard from './ExamRequestCard';
 import axios from 'axios';
+import { useAlert } from "../../AlertContext";
 
 export default function AllRequests() {
   const [allExams, setAllExams] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refresh, setRefresh] = useState(false);
+  const {showAlert} = useAlert();
 
   useEffect(() => {
     const getAllExams = async () => {
@@ -19,7 +21,7 @@ export default function AllRequests() {
             }
         } catch(error) {
             console.log(error);
-            alert("Something went wrong!");
+            showAlert("Something went wrong!", "error");
             setLoading(false);
         }
     }

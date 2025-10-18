@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import { Button } from '@mui/material';
 import axios from 'axios';
 import {useSelector} from 'react-redux';
+import {useAlert} from '../../../AlertContext';
 
 export default function AddNewExam({setRefresh, refresh}) {
     const [date, setDate] = useState('');
@@ -9,6 +10,7 @@ export default function AddNewExam({setRefresh, refresh}) {
     const [type, setType] = useState({});
     const [loading, setLoading] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const {showAlert} = useAlert();
 
     useEffect(() => {
         if(examTypes) {
@@ -21,7 +23,7 @@ export default function AddNewExam({setRefresh, refresh}) {
         setLoading(true);
 
         if(!date || !type) {
-            alert("Please fill all the fields!");
+            showAlert("Please fill all the fields!", "error");
             setLoading(false);
             return;
         }
@@ -29,17 +31,17 @@ export default function AddNewExam({setRefresh, refresh}) {
         try {
             let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add`, {date, type});
             if(response.status === 200) {
-                alert("Exam Added Successfully!");
+                showAlert("Exam Added Successfully!", "success");
                 setLoading(false);
                 setRefresh(r => !r);
             } else {
-                alert("Something went wrong!");
+                showAlert("Something went wrong!", "error");
                 setLoading(false);
                 setRefresh(r => !r);
             }            
         } catch (error) {
             console.log(error);
-            alert(error.message);
+            showAlert("Server error!", "error");
             setLoading(false);
             setRefresh(r => !r);
         }

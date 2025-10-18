@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import { useAlert } from "../../../AlertContext";
 
 let batchTable = [];
 
@@ -17,6 +18,7 @@ export default function AllotSeats() {
     const [noOfBatch, setNoOfBatch] = useState(2);
     const [noOfStudentCategories, setNoOfStudentCategories] = useState(0);
     const navigate = useNavigate();
+    const {showAlert} = useAlert();
 
     const getCollegeData = async () => {
         let currentCollege = {...collegeData};
@@ -34,13 +36,13 @@ export default function AllotSeats() {
                 setExamReq(er => { return {...examRequest, eligibleStudents: response.data.eligibleStudents}});
             }                
         } catch(err) {
-            console.log(err);                   
+            showAlert("Something went wrong while getting eligible students!", "error");                 
         }
     }
 
     useEffect(() => {
         if(!collegeData?._id) {
-            navigate('/home');
+            return navigate('/');
         }
 
         getCollegeData();
@@ -49,7 +51,7 @@ export default function AllotSeats() {
             getEligibleStudents(examRequest);
             
         } else {
-            navigate('/all-requests');
+            navigate('/');
         }
     }, []);
 
@@ -164,6 +166,7 @@ export default function AllotSeats() {
         }
 
         setCollege({...updatedCollege});
+        showAlert("Seats allotted successfully!", "success");
     }
 
     const finalizeAllotment = async () => {
@@ -189,12 +192,12 @@ export default function AllotSeats() {
             let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/exam/allotment`, {examId: examReq, allotment});
 
             if(response.status == 200) {
-                alert("Seats Alloted Successfully!");
+                showAlert("Seats Allocation finalized Successfully!", "success");
             }
             
         } catch(err) {
             console.log(err);
-            alert("Something went wrong!");
+            showAlert("Something went wrong!", "error");
         }
     }
     

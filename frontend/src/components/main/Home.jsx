@@ -4,6 +4,7 @@ import {useSelector} from "react-redux";
 import AddNewExam from "./admin/AddNewExam";
 import ExamRequestCard from "./ExamRequestCard";
 import CollegeData from "./admin/CollegeData";
+import { useAlert } from "../../AlertContext";
 
 export default function Home() {
     const user = useSelector(state => state.user);
@@ -14,7 +15,7 @@ export default function Home() {
     const [loading, setLoading] = useState(false);
     const [classRoom, setClassRoom] = useState([[]]);
     const [refresh, setRefresh] = useState(false);
-
+    const {showAlert} = useAlert();
 
     useEffect(() => {
         getAllExams();
@@ -39,7 +40,7 @@ export default function Home() {
         } catch(err) {
             setLoading(false);
             console.log(err);
-            alert("Got error from the server while getting the college data!");
+            showAlert("Got error from the server while getting the college data!", "error");
         }
     }
 
@@ -52,7 +53,7 @@ export default function Home() {
         
         } catch(err) {
             console.log(err);
-            alert("Got error from the server while getting the college data");
+            showAlert("Got error from the server while getting the college data", "error");
             return [];
         }
     }
@@ -63,7 +64,7 @@ export default function Home() {
         if(user?.type === 'student'){
             
             if(!ex?.allotment || ex?.allotment?.length === 0) {
-                alert("seats are not allotted this exam!");
+                showAlert("seats are not allotted for this exam!", "info");
                 setAllotment({});
                 return;
             }
@@ -82,7 +83,7 @@ export default function Home() {
                             if(newAllotment) {
                                 setAllotment(newAllotment);
                             } else {
-                                alert("Your USN was not found in the list of eligible students. Please contact your coordinator for more information.");
+                                showAlert("Your USN was not found in the list of eligible students. Please contact your coordinator for more information.", "warning");
                                 setAllotment({});
                             }
 

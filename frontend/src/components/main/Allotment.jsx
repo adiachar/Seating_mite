@@ -1,25 +1,7 @@
-import axios from 'axios';
-import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom';
 
 export default function Allotment() {
     const examReq = useLocation().state.examReq;
-
-    const getAllotment = async () => {
-        try {
-            let response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/exam/allotment/${examReq._id}`);
-
-            if(response.status === 200) {
-                console.log(response.data.allotment);
-                setAllotment(response.data.allotment);
-            }
-        } catch(err) {
-            console.log(err);
-            alert("Something went wrong!");
-        }
-    }
-
-    console.log(examReq);
 
     return (
         <div className='w-full p-2'>

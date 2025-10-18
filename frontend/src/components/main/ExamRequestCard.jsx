@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux'
 import { Button } from '@mui/material';
-import {useEffect, useState} from 'react'
+import {useState} from 'react'
 import axios from 'axios';
 import ExelFileInput from './ExelFileInput';
 import { useNavigate } from 'react-router-dom';
@@ -9,11 +9,13 @@ import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import BallotIcon from '@mui/icons-material/Ballot';
+import { useAlert } from "../../AlertContext";
 
 export default function ExamRequestCard({examReq, setRefresh, selectedExam, selectExam}) {
   const user = useSelector(state => state.user);
   const [addStudents, setAddStudents] = useState(false);
   const navigate = useNavigate();
+  const {showAlert} = useAlert();
 
   const deleteExamRequest = async () => {
     if(user.type === 'admin') {
@@ -21,13 +23,13 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
       try {
         let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/delete`, {examId: examReq._id});
         if(response.status === 200) {
-          alert("Exam Request Deleted Successfully!");
+          showAlert("Exam Request Deleted Successfully!", "success");
           setRefresh(r => !r);
           setDelLoading(false);
         }       
       } catch(err) {
         console.log(err);
-        alert("Something went wrong!");
+        showAlert("Something went wrong!", "error");
         setDelLoading(false);
       }
     }
@@ -98,19 +100,20 @@ function AddEligibleStudents({examReq}) {
   const [semester, setSemester] = useState(1);
   const [subject, setSubject] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const {showAlert} = useAlert();
 
   const submitData = async (e) => {
       e.preventDefault();
       setLoading(true);
 
       if(!students || students.length === 0) {
-          alert("Please Choose a student data (xml file)!");
+          showAlert("Please Choose a student data (xml file)!", "error");
           setLoading(false);
           return;
       }
 
       if(!branch || !semester || !subject) {
-          alert("Please fill all the fields!");
+          showAlert("Please fill all the fields!", "error");
           setLoading(false);
           return;
       }
@@ -119,14 +122,14 @@ function AddEligibleStudents({examReq}) {
       .then(res => {
           setLoading(false);
           if(res.status === 200) {
-              alert("Data Submitted Successfully!");
+              showAlert("Data Submitted Successfully!", "success");
               setIsSubmitted(true);
           } else {
-              alert("Something went wrong!");
+              showAlert("Something went wrong!", "error");
           }
       }).catch(err => {
           console.log(err);
-          alert("Something went wrong!");
+          showAlert("Something went wrong!", "error");
           setLoading(false);
           return;
       });

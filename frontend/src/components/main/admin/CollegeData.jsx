@@ -4,6 +4,7 @@ import { setCollege } from '../../../features/seatingSlice';
 import {Button} from "@mui/material";
 import axios from 'axios';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import { useAlert } from "../../../AlertContext";
 
 export default function CollegeData() {
     const collegeData = useSelector(state => state.college);
@@ -11,7 +12,7 @@ export default function CollegeData() {
     const [collegeDataCopy, setCollegeDataCopy] = useState({});
     const [currRefresh, setCurrRefresh] = useState(false);
     const dispatch = useDispatch();
-
+    const {showAlert} = useAlert();
 
     const getCollege = async () => {
         try {
@@ -21,7 +22,7 @@ export default function CollegeData() {
             }
         } catch(err) {
             console.log(err);
-            alert("Got error from the server while getting the college data");
+            showAlert("Got error from the server while getting the college data", "error");
         }
     }
 
@@ -106,7 +107,7 @@ export default function CollegeData() {
         let name = prompt(`Enter Building Name to Delete: '${collegeDataCopy.buildings[bIdx].name}'`);
 
         if(name != collegeDataCopy.buildings[bIdx].name) {
-            alert("Wrong Building Name!");
+            showAlert("Wrong Building Name!", "warning");
             return;
         }
 
@@ -114,12 +115,12 @@ export default function CollegeData() {
             let response = await axios.delete(`${import.meta.env.VITE_SERVER_URL}/college/building`, 
                 {data: {collegeId: collegeDataCopy._id, buildingId: collegeDataCopy.buildings[bIdx]._id}});
             if(response.status == 200) {
-                alert("Building Removed Successfully!");
+                showAlert("Building Removed Successfully!", "success");
                 getCollege();
             }
         } catch(err) {
             console.log(err);
-            alert("Something went wrong!");
+            showAlert("Something went wrong!", "error");
         }
     }
 
@@ -128,12 +129,12 @@ export default function CollegeData() {
             let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/college/building`, 
                 {collegeId: collegeDataCopy._id, building: collegeDataCopy.buildings[bIdx]});
             if(response.status == 200) {
-                alert("Data Saved Successfully");
+                showAlert("Data Updated Successfully", "success");
                 getCollege();
             }
         } catch(err) {
             console.log(err);
-            alert("Something went wrong!");
+            showAlert("Something went wrong!", "error");
         }
     }
 
@@ -248,6 +249,7 @@ function AddNewBuilding({getCollege}) {
     const [floors, setFloors] = useState([]);
     const [classRooms, setClassRooms] = useState([]);
     const user = useSelector(state => state.user);
+    const {showAlert} = useAlert();
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
@@ -257,12 +259,12 @@ function AddNewBuilding({getCollege}) {
         try {
             let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/college/add-building`, {building: newBuilding, collegeId: user.college});
             if(response.status == 200) {
-                alert("Added New Building Successfully!");
+                showAlert("New building added Successfully!", "success");
                 getCollege();
             }
         } catch(err) {
             console.log(err);
-            alert("Got Error:", err);
+            showAlert("something went wrong", "error");
         }
     }
 
