@@ -11,6 +11,7 @@ export default function AddNewExam({setRefresh, refresh}) {
     const [loading, setLoading] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const {showAlert} = useAlert();
+    const headers = useSelector(state => state.headers);
 
     useEffect(() => {
         if(examTypes) {
@@ -29,7 +30,7 @@ export default function AddNewExam({setRefresh, refresh}) {
         }
 
         try {
-            let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add`, {date, type});
+            let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add`, {date, type}, {headers});
             if(response.status === 200) {
                 showAlert("Exam Added Successfully!", "success");
                 setLoading(false);
@@ -41,7 +42,7 @@ export default function AddNewExam({setRefresh, refresh}) {
             }            
         } catch (error) {
             console.log(error);
-            showAlert("Server error!", "error");
+            showAlert(error.response.data.message, "error");
             setLoading(false);
             setRefresh(r => !r);
         }

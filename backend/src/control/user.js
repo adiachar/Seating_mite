@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import User from "../model/user.js"
 import Student from "../model/student.js";
 import dotenv from "dotenv";
+import {sendEmail} from "../utils/mail.js";
 
 
 dotenv.config();
@@ -49,6 +50,13 @@ export const signUp = async (req, res) => {
         let user = newUser.toObject();
 
         delete user.password;
+        
+        sendEmail(user.email, 
+            `Welcome to MITE Seating App – ${user.type} Account Activated`,
+            `Hello ${user.name}, <br>
+            Your ${user.type} account for the MITE Seating App has been successfully created. <br>
+            `
+        );
 
         let token = jwt.sign(user, process.env.SECRET, {expiresIn: '1h'});
         return res.status(200).json({user: user, token: token});
@@ -92,8 +100,6 @@ export const StudentSignUp = async (req, res) => {
         return res.status(404).json({message: "No request object!"});
     }
 
-    console.log(req.body);
-
     try {
         req.body.password = await bcrypt.hash(req.body.password, 10);
         
@@ -102,6 +108,13 @@ export const StudentSignUp = async (req, res) => {
         let user = newStudent.toObject();
 
         delete user.password;
+
+        sendEmail(user.email, 
+            `Welcome to MITE Seating App – ${user.type} Account Activated`,
+            `Hello ${user.name}, <br>
+            Your ${user.type} account for the MITE Seating App has been successfully created. <br>
+            `
+        );
 
         let token = jwt.sign(user, process.env.SECRET, {expiresIn: '1h'});
         return res.status(200).json({user: user, token: token});

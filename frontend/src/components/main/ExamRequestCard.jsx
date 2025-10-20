@@ -16,12 +16,13 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
   const [addStudents, setAddStudents] = useState(false);
   const navigate = useNavigate();
   const {showAlert} = useAlert();
+  const headers = useSelector(state => state.headers);
 
   const deleteExamRequest = async () => {
     if(user.type === 'admin') {
       setDelLoading(true);
       try {
-        let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/delete`, {examId: examReq._id});
+        let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/delete`, {examId: examReq._id}, {headers});
         if(response.status === 200) {
           showAlert("Exam Request Deleted Successfully!", "success");
           setRefresh(r => !r);
@@ -101,6 +102,7 @@ function AddEligibleStudents({examReq}) {
   const [subject, setSubject] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const {showAlert} = useAlert();
+  const headers = useSelector(state => state.headers);
 
   const submitData = async (e) => {
       e.preventDefault();
@@ -118,7 +120,7 @@ function AddEligibleStudents({examReq}) {
           return;
       }
 
-      let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add/eligible-students`, {branch, semester, subject, students, examId: examReq._id})
+      let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add/eligible-students`, {branch, semester, subject, students, examId: examReq._id}, {headers})
       .then(res => {
           setLoading(false);
           if(res.status === 200) {

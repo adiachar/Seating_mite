@@ -1,8 +1,10 @@
-import Exams from "../model/exam.js";
+import Exam from "../model/exam.js";
+import User from "../model/user.js";
+import {sendEmail} from "../utils/mail.js";
 
 export const getExams = async (req, res) => {
     try {
-        const exams = await Exams.find().select('-eligibleStudents -allotment').lean();
+        const exams = await Exam.find().select('-eligibleStudents -allotment').lean();
 
         return res.status(200).json({exams: exams});
     } catch(err) {
@@ -19,7 +21,7 @@ export const getEligibleStudents = async (req, res) => {
             return res.status(404).json({message: "No examId provided!"});
         }
 
-        const exam = await Exams.findById(examId).select('eligibleStudents -_id').lean();
+        const exam = await Exam.findById(examId).select('eligibleStudents -_id').lean();
 
         if(!exam) {
             return res.status(404).json({message: "No exams found!"});
@@ -41,7 +43,7 @@ export const addEligibleStudents = async (req, res) => {
             return res.status(400).json({message: "Please provide all the required fields!"});
         }
 
-        const exam = await Exams.findById(examId);
+        const exam = await Exam.findById(examId);
         const eligibleStudents = students.map(student => student.USN);
 
         if(!exam) {
@@ -65,7 +67,12 @@ export const addEligibleStudents = async (req, res) => {
     }
 }
 
-export const addExams = async (req, res) => {
+const getDate = (date) => {
+    date = new Date(date);
+    return date.toLocaleDateString('en-GB', {day: '2-digit', month: 'long', year: 'numeric'});
+}
+
+export const addExam = async (req, res) => {
     try {
         const {date, type} = req.body;
 
@@ -73,14 +80,30 @@ export const addExams = async (req, res) => {
             return res.status(400).json({message: "Please provide all the required fields!"});
         }
 
-        const exam = await Exams.findOne({date: date, type: type});
+        const exam = await Exam.findOne({date: date, type: type});
 
         if(exam) {
             return res.status(400).json({message: "Exam Request already exists!"});
         }
 
-        const newExam = new Exams({date: date, type: type});
+        const newExam = new Exam({date: date, type: type});
         await newExam.save();
+
+        const allUsers = User.find({type: 'coordinator'});
+        console.log(allUsers);
+        if(allUsers?.length > 0) {
+            for(let user of allUsers) {
+                sendEmail(user.email, 
+                    `Eligible Students Added for ${type}  Examination – ${getDate(date)}`,
+                    `Hello ${user.name}, <br>
+                    This is to inform you that the Examination Dean, ${req.user}, has successfully added the eligible students for the upcoming ${type} examination scheduled on ${getDate(date)}.<br>
+                    You can now proceed with the necessary arrangements for the exam.<br>
+                    For any queries, please contact the Examination Dean.<br><br>
+                    `
+                );
+            }
+        }
+
         return res.status(200).json({message: "Exam added successfully!"});
 
     } catch(err) {
@@ -95,7 +118,7 @@ export const deleteExam = async (req, res) => {
         if(!examId) {
             return res.status(400).json({message: "Please provide examId!"});
         }
-        const exam = await Exams.findByIdAndDelete(examId);
+        const exam = await Exam.findByIdAndDelete(examId);
         return res.status(200).json({message: "Exam deleted successfully!"});
     }
     catch(err) {
@@ -108,7 +131,7 @@ export const updateAllotment = async (req, res) => {
     try {   
         const {examId, allotment} = req.body;
 
-        const response = await Exams.findByIdAndUpdate(examId, { $set: {isAllotted: true, allotment: allotment}}, {new: true});
+        const response = await Exam.findByIdAndUpdate(examId, { $set: {isAllotted: true, allotment: allotment}}, {new: true});
 
         return res.status(200).json({message: "Allotment made Successfully!"});
     } catch(err) {
@@ -121,7 +144,7 @@ export const getAllotment = async (req, res) => {
     try {
         const {examId} = req.params;
         
-        const exam = await Exams.findById(examId).select("allotment").lean();
+        const exam = await Exam.findById(examId).select("allotment").lean();
         
         return res.status(200).json({allotment: exam.allotment});
 

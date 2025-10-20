@@ -14,7 +14,7 @@ export default function AllotSeats() {
     const [college, setCollege] = useState(null);
     const examRequest = useLocation().state.examReq;
     const [examReq, setExamReq] = useState(null);
-    const user = useSelector(state => state.user);
+    const headers = useSelector(state => state.headers);
     const [noOfBatch, setNoOfBatch] = useState(2);
     const [noOfStudentCategories, setNoOfStudentCategories] = useState(0);
     const navigate = useNavigate();
@@ -31,7 +31,7 @@ export default function AllotSeats() {
 
     const getEligibleStudents = async (examRequest) => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/exam/eligible-students/${examRequest._id}`);
+            const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/exam/eligible-students/${examRequest._id}`, {headers});
             if(response.status === 200) {
                 setExamReq(er => { return {...examRequest, eligibleStudents: response.data.eligibleStudents}});
             }                
@@ -189,7 +189,7 @@ export default function AllotSeats() {
         }
 
         try {
-            let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/exam/allotment`, {examId: examReq, allotment});
+            let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/exam/allotment`, {examId: examReq, allotment}, {headers});
 
             if(response.status == 200) {
                 showAlert("Seats Allocation finalized Successfully!", "success");

@@ -16,6 +16,7 @@ export default function Home() {
     const [classRoom, setClassRoom] = useState([[]]);
     const [refresh, setRefresh] = useState(false);
     const {showAlert} = useAlert();
+    const headers = useSelector(state => state.headers);
 
     useEffect(() => {
         getAllExams();
@@ -25,7 +26,7 @@ export default function Home() {
         setLoading(true);
 
         try {
-        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/exam/all`);
+        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/exam/all`, {headers});
         if(response.status === 200) {
             let allExams = [];
 
@@ -46,7 +47,7 @@ export default function Home() {
 
     const getAllotment = async (currExam) => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/exam/allotment/${currExam._id}`);
+            const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/exam/allotment/${currExam._id}`, {headers});
         if(response.status === 200) {
             return response.data.allotment;
         }

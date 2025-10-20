@@ -1,18 +1,18 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-
 
 export default function ViewExamDetails() {
     const examRequest = useLocation().state.examReq;
     const [examReq, setExamReq] = useState(null);
     const navigate = useNavigate();
+    const headers = useSelector(state => state.headers);
 
     useEffect(() => {
         const getEligibleStudents = async (examRequest) => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/exam/eligible-students/${examRequest._id}`);
+                const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/exam/eligible-students/${examRequest._id}`, {headers});
                 if(response.status === 200) {
                     setExamReq(er => { return {...examRequest, eligibleStudents: response.data.eligibleStudents}});
                 }                

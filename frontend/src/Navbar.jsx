@@ -9,6 +9,7 @@ export default function Navbar() {
   const college = useSelector(state => state.college);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const headers = useSelector(state => state.headers);
 
   useEffect(() => {
     const validateToken = async (token) => {
@@ -16,7 +17,7 @@ export default function Navbar() {
         authorization: `Bearer ${token}`,
       }
       try {
-        const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/user/authorize`, {}, {headers});
+        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/user/authorize`, {headers});
         if(response.status === 200) {
           dispatch(setUser(response.data.user));
           dispatch(setHeader(token));            
@@ -41,7 +42,7 @@ export default function Navbar() {
 
   const getCollege = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${user.college}`);
+      const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${user.college}`, {headers});
       if(response.status === 200) {
         dispatch(setCollege(response.data.college));
       }

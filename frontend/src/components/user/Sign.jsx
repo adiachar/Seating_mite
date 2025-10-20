@@ -17,7 +17,7 @@ export default function Sign() {
 
     useEffect(() => {
         if(user?._id) {
-            navigate('/home');
+            navigate('/');
         }
     }, []);
 
@@ -138,10 +138,11 @@ function SignIn({userType}) {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const headers = useSelector(state => state.headers);
 
     const getCollege = async (user) => {
         try {
-        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${user.college}`);
+        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${user.college}`, {headers});
         if(response.status === 200) {
             dispatch(setCollege(response.data.college))
         }
@@ -261,7 +262,7 @@ function SignUp({userType}) {
     const [status, setStatus] = useState("");
     const [loading, setLoading] = useState(false);  
     const navigate = useNavigate();
-    const [college, setCollege] = useState({});
+    const [college, setCurrCollege] = useState({});
     const [colleges, setColleges] = useState([]);
     const dispatch = useDispatch();
 
@@ -272,7 +273,7 @@ function SignUp({userType}) {
                 const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/all`);
                 if(response.status == 200) {
                     setColleges(response.data.colleges);
-                    setCollege(response.data.colleges[0]);
+                    setCurrCollege(response.data.colleges[0]);
                 }                
             } catch(err) {
                 console.log(err);
@@ -300,7 +301,7 @@ function SignUp({userType}) {
     }, [college]);
 
     const handleCollegeChange = (e) => {
-        setCollege(e.target.value);
+        setCurrCollege(e.target.value);
     }
 
     const formik = useFormik({
@@ -328,15 +329,13 @@ function SignUp({userType}) {
                     dispatch(setUser(response.data.user));
                     dispatch(setHeader(response.data.token));
                     dispatch(setCollege(college));
-                    setLoading(false);
-                    navigate("/home");
+                    navigate("/");
                 }
 
             } catch (err) {
-                if(err.response) {
-                    setStatus(err.response.data.message);
-                    setLoading(false);
-                }
+                setStatus("something went wrong");
+                console.log(err);
+                setLoading(false);
             }
         }
     });
@@ -382,7 +381,7 @@ function SignUp({userType}) {
                         email
                         </span>
                     <input 
-                        className='ps-3 outline-none' 
+                        className='ps-3 outline-none w-full' 
                         type="email" 
                         name='email' 
                         placeholder='email' 
@@ -439,7 +438,7 @@ function SignUp({userType}) {
                         lock
                     </span>
                     <input 
-                    className='w-10/12 ps-3 outline-none' 
+                    className='w-10/12 ps-3 outline-none w-full' 
                     type="password" 
                     name='password' 
                     placeholder='password' 
@@ -459,7 +458,7 @@ function SignUp({userType}) {
                         lock_reset
                     </span>
                     <input 
-                    className='w-10/12 ps-3 outline-none' 
+                    className='w-10/12 ps-3 outline-none w-full' 
                     type="password"
                     name='conPass' 
                     placeholder='Re-enter your password'
@@ -498,7 +497,7 @@ function StudentSignUp() {
     const [status, setStatus] = useState("");
     const [loading, setLoading] = useState(false);  
     const navigate = useNavigate();
-    const [college, setCollege] = useState({});
+    const [college, setCurrCollege] = useState({});
     const [colleges, setColleges] = useState([]);
     const dispatch = useDispatch();
 
@@ -508,7 +507,7 @@ function StudentSignUp() {
                 const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/all`);
                 if(response.status == 200) {
                     setColleges(response.data.colleges);
-                    setCollege(response.data.colleges[0]);
+                    setCurrCollege(response.data.colleges[0]);
                 }                
             } catch(err) {
                 console.log(err);
@@ -520,7 +519,7 @@ function StudentSignUp() {
 
 
     const handleCollegeChange = (e) => {
-        setCollege(e.target.value);
+        setCurrCollege(e.target.value);
     }
 
     const formik = useFormik({
@@ -613,7 +612,7 @@ function StudentSignUp() {
                             email
                             </span>
                         <input 
-                            className='ps-3 outline-none' 
+                            className='ps-3 outline-none w-full' 
                             type="email" 
                             name='email' 
                             placeholder='email' 
@@ -633,7 +632,7 @@ function StudentSignUp() {
                             id_card
                             </span>
                         <input 
-                            className='ps-3 outline-none' 
+                            className='ps-3 outline-none w-full' 
                             type="text" 
                             name='usn' 
                             placeholder='ex: 4mt22is002' 
@@ -653,7 +652,7 @@ function StudentSignUp() {
                             menu_book
                         </span>
                         <input 
-                            className='ps-3 outline-none' 
+                            className='ps-3 outline-none w-full' 
                             type="number" 
                             name='semester' 
                             min={1}
@@ -676,7 +675,7 @@ function StudentSignUp() {
                             </span>
                         +91 
                         <input 
-                            className='ps-3 outline-none' 
+                            className='ps-3 outline-none w-full' 
                             type="number" 
                             name='phoneNo' 
                             placeholder='Enter Your Phone Number' 
@@ -733,7 +732,7 @@ function StudentSignUp() {
                             lock
                         </span>
                         <input 
-                        className='w-10/12 ps-3 outline-none' 
+                        className='ps-3 outline-none w-full' 
                         type="password" 
                         name='password' 
                         placeholder='password' 
@@ -753,7 +752,7 @@ function StudentSignUp() {
                             lock_reset
                         </span>
                         <input 
-                        className='w-10/12 ps-3 outline-none' 
+                        className='ps-3 outline-none w-full' 
                         type="password"
                         name='conPass' 
                         placeholder='Re-enter your password'
@@ -788,17 +787,17 @@ function StudentSignUp() {
     );
 }
 
-
 function StudentSignIn() {
 
     const [status, setStatus] = useState("");
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const headers = useSelector(state => state.headers);
 
     const getCollege = async (user) => {
         try {
-        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${user.college}`);
+        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${user.college}`, {headers});
         if(response.status === 200) {
             dispatch(setCollege(response.data.college))
         }

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import './App.css';
 import {Routes, Route, Router} from 'react-router-dom';
 import Sign from './components/user/Sign';
@@ -12,7 +11,6 @@ import AllotSeats from './components/main/admin/AllotSeats';
 import CollegeData from './components/main/admin/CollegeData';
 import Allotment from './components/main/Allotment';
 import Home from './components/main/Home';
-import Swal from "sweetalert2";
 import { AlertProvider } from './AlertContext';
 
 function App() {

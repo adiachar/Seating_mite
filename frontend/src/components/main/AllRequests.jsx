@@ -2,18 +2,20 @@ import { useState, useEffect } from 'react';
 import RequestCard from './ExamRequestCard';
 import axios from 'axios';
 import { useAlert } from "../../AlertContext";
+import { useSelector } from 'react-redux';
 
 export default function AllRequests() {
   const [allExams, setAllExams] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const {showAlert} = useAlert();
+  const headers = useSelector(state => state.headers);
 
   useEffect(() => {
     const getAllExams = async () => {
         setLoading(true);
         try {
-            let response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/exam/all`);
+            let response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/exam/all`, {headers});
 
             if(response.status === 200) {
                 setAllExams(response.data.exams);

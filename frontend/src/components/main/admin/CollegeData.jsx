@@ -13,10 +13,11 @@ export default function CollegeData() {
     const [currRefresh, setCurrRefresh] = useState(false);
     const dispatch = useDispatch();
     const {showAlert} = useAlert();
+    const headers = useSelector(state => state.headers);
 
     const getCollege = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${user.college}`);
+            const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${user.college}`, {headers});
             if(response.status === 200) {
                 dispatch(setCollege(response.data.college));
             }
@@ -113,7 +114,7 @@ export default function CollegeData() {
 
         try {
             let response = await axios.delete(`${import.meta.env.VITE_SERVER_URL}/college/building`, 
-                {data: {collegeId: collegeDataCopy._id, buildingId: collegeDataCopy.buildings[bIdx]._id}});
+                {data: {collegeId: collegeDataCopy._id, buildingId: collegeDataCopy.buildings[bIdx]._id}}, {headers});
             if(response.status == 200) {
                 showAlert("Building Removed Successfully!", "success");
                 getCollege();
@@ -127,7 +128,7 @@ export default function CollegeData() {
     const saveUpdates = async (bIdx) => {
         try {
             let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/college/building`, 
-                {collegeId: collegeDataCopy._id, building: collegeDataCopy.buildings[bIdx]});
+                {collegeId: collegeDataCopy._id, building: collegeDataCopy.buildings[bIdx]}, {headers});
             if(response.status == 200) {
                 showAlert("Data Updated Successfully", "success");
                 getCollege();
@@ -250,6 +251,7 @@ function AddNewBuilding({getCollege}) {
     const [classRooms, setClassRooms] = useState([]);
     const user = useSelector(state => state.user);
     const {showAlert} = useAlert();
+    const headers = useSelector(state => state.headers);
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
@@ -257,7 +259,7 @@ function AddNewBuilding({getCollege}) {
         newBuilding.floors = floors;
 
         try {
-            let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/college/add-building`, {building: newBuilding, collegeId: user.college});
+            let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/college/add-building`, {building: newBuilding, collegeId: user.college}, {headers});
             if(response.status == 200) {
                 showAlert("New building added Successfully!", "success");
                 getCollege();
