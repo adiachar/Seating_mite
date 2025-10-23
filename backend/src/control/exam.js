@@ -39,9 +39,8 @@ export const addEligibleStudents = async (req, res) => {
     try {
         const {branch, semester, subject, students, examId} = req.body;
 
-        console.log(req.body);
-
         if(!branch || !semester || !subject || !students || students.length === 0) {
+            
             return res.status(400).json({message: "Please provide all the required fields!"});
         }
 
@@ -49,18 +48,20 @@ export const addEligibleStudents = async (req, res) => {
         const eligibleStudents = students.map(student => student.USN);
 
         if(!exam) {
+            
             return res.status(404).json({message: "Exam not found!"});
         }
 
-        let existingEntryIndex = exam.eligibleStudents.findIndex(entry => entry.branch === branch && entry.semester === semester && entry.subject === subject);
+        let existingEntryIndex = exam.eligibleStudents.findIndex(entry => entry.branch === branch && entry.semester === semester);
 
         if(existingEntryIndex !== -1) {
             exam.eligibleStudents[existingEntryIndex].students = eligibleStudents;
+            await exam.save();
+
         } else {
-            exam.eligibleStudents.push({branch, semester, subject, students: eligibleStudents});
+            let response = await Exam.findByIdAndUpdate(examId, {$push: {eligibleStudents: {branch: branch, semester: semester, subject: subject, students: eligibleStudents}}}, {new: true});
         }
         
-        await exam.save();
         return res.status(200).json({message: "Eligible students added successfully!"});
 
     } catch(err) {

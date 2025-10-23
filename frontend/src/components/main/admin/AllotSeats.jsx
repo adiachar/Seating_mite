@@ -68,7 +68,6 @@ export default function AllotSeats() {
         
         if(examRequest?._id) {
             getCollege();
-            console.log(examRequest.eligibleStudents);
             setStdCategory(examRequest.eligibleStudents.map((elStd) => {return {...elStd}}));
             setNoOfStudentCategories(examRequest.eligibleStudents.length);
         }

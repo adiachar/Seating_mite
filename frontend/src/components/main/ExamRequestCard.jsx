@@ -123,9 +123,9 @@ function AddEligibleStudents({examReq, setRefresh}) {
       return;
     }
     
-    let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add/eligible-students`, {branch, semester, subject, students, examId: examReq._id}, {headers});
-
     try {
+      
+      let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add/eligible-students`, {branch, semester, subject, students, examId: examReq._id}, {headers});
       setLoading(false);
       if(response.status === 200) {
         showAlert("Data Submitted Successfully!", "success");

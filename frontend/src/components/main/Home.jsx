@@ -162,8 +162,10 @@ export default function Home() {
                             <ExamRequestCard key={idx} examReq={ex} setRefresh={setRefresh} selectedExam={selectedExam} selectExam={selectExam}/> 
                         ) : <p>No Exams!</p>}
                     </div>
-                </div> : <h1>Loading...</h1>}
-
+                </div> : 
+                <div className="py-5 w-full flex justify-center">
+                    <div className="h-10 w-10 border-4 border-blue-600 border-t-transparent animate-spin rounded-full flex items-center justify-center"></div>
+                </div>}
                 {user?.type === 'student' && allotment?.building && <div className="min-h-50 mb-6 p-5 bg-white rounded-2xl text-white flex flex-col gap-3 bg-gradient-to-br from-blue-600 to-purple-600">
                     <div className="flex items-center gap-3 text-xl font-semibold ">
                         <span 
