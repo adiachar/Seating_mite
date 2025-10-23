@@ -33,6 +33,8 @@ export default function CollegeData() {
             return;
         }
         let tempCollegeData = JSON.parse(JSON.stringify(collegeData));
+
+        tempCollegeData.edit = false;
         
         for(let building of tempCollegeData.buildings) {
             building.edit = false;
@@ -236,7 +238,8 @@ export default function CollegeData() {
                                             ><AddCircleOutlineIcon/>Add Floor</button>}
                                 </div>    
                             ): <p>No Buildings Added</p>}
-                        </div>                        
+                        </div>
+                        <Departments college={collegeDataCopy} setCollege={setCollegeDataCopy} setCurrRefresh={setCurrRefresh}/>                        
                     </div>
                 </div>
             : <h1>Loading..</h1>}
@@ -374,15 +377,15 @@ function AddNewBuilding({getCollege}) {
                                     <div key={idx} className='w-full mb-1 px-3 py-2 text-sm flex flex-wrap lg:flex-nowrap md:flex-nowrap gap-2 bg-gray-200 overflow-auto rounded-2xl'>
                                         <label htmlFor="" className='flex gap-2'>
                                             Name:
-                                            <input type="text" name='name' value={c.name} readOnly={!building.edit}/>
+                                            <input type="text" name='name' value={c.name} readOnly={!building.edit} required/>
                                         </label>
                                         <label htmlFor="" className='flex gap-2'>
                                             Rows:
-                                            <input type="text" name='name' value={c.rows} readOnly={!building.edit}/>
+                                            <input type="text" name='name' value={c.rows} readOnly={!building.edit} required/>
                                         </label>
                                         <label htmlFor="" className='flex gap-2'>
                                             Columns:
-                                            <input type="text" name='name' value={c.columns} readOnly={!building.edit}/>
+                                            <input type="text" name='name' value={c.columns} readOnly={!building.edit} required/>
                                         </label>
                                     </div>
                                 )                                
@@ -394,6 +397,113 @@ function AddNewBuilding({getCollege}) {
                     className='mt-4 px-3 py-2 text-sm cursor-pointer rounded-2xl bg-green-600 hover:bg-green-700 text-white transition-all'
                     >Submit</button>
             </form>            
+        </div>
+    );
+}
+
+function Departments({college, setCollege, setCurrRefresh}) {
+
+    const headers = useSelector(state => state.headers);
+
+    const editDepartments = () => {
+        let updatedCollege = college;
+        updatedCollege.edit = true;
+        setCollege({...updatedCollege});
+    }
+
+    const deleteDepartment = (idx) => {
+        let updatedCollege = college;
+        updatedCollege.departments.splice(idx, 1);
+        setCollege({...updatedCollege});
+    }
+
+    const updateShort = (e, idx) => {
+        let updatedCollege = college;
+        updatedCollege.departments[idx].short = e.target.value;
+        setCollege({...updatedCollege});
+    }
+
+    const updateLong = (e, idx) => {
+        let updatedCollege = college;
+        updatedCollege.departments[idx].long = e.target.value;
+        setCollege({...updatedCollege});
+    }
+
+    const saveUpdates = async () => {
+        try {
+            let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/college/departments`, 
+                {collegeId: college._id, departments: college.departments}, {headers});
+            if(response.status == 200) {
+                showAlert("Data Updated Successfully", "success");
+                setCurrRefresh(r => !r);
+            }
+        } catch(err) {
+            console.log(err);
+            showAlert("Something went wrong!", "error");
+        }
+    }
+
+    const addDepartment = async () => {
+        let updatedCollege = college;
+        updatedCollege.departments.push({short: '', long: ''});
+        setCollege({...updatedCollege});
+    }
+    
+    return (
+        <div className='p-2 border border-black rounded-2xl'>
+            <form onSubmit={saveUpdates} className='w-full p-2 flex flex-col gap-2 my-2 '>
+                <div className='p-2 flex gap-2 bg-gray-200 rounded-2xl'>
+                    {!college?.edit &&
+                        
+                        <button
+                            className='px-3 py-2 text-sm cursor-pointer rounded-2xl bg-blue-600 hover:bg-blue-700 text-white transition-all'
+                            onClick={editDepartments}>Edit</button>   
+                    }
+
+                    {college?.edit && 
+                        <>
+                            <button
+                                type='submit'
+                                className='px-3 py-2 text-sm cursor-pointer border-black rounded-2xl bg-green-600 hover:bg-green-700 text-white transition-all'
+                                >Save</button>
+
+                            <button
+                                className='px-3 py-2 text-sm cursor-pointer bg-gray-600 rounded-2xl text-white'
+                                onClick={() => setCurrRefresh(r => !r)}>Back</button>                                            
+                        </>
+                    }                    
+                </div>
+
+                <h1 className='mt-5'>Departements:</h1>
+
+                {college.departments.map((dept, idx) => 
+                    <div key={idx} className='flex justify-between gap-2'>
+                        <div className='w-full mb-1 px-3 py-2 text-sm flex flex-col lg:flex-row md:flex-row gap-2 bg-gray-200 overflow-auto rounded-2xl'>
+                            <input
+                                className='w-full md:w-1/12 lg:w-1/12 outline-0'
+                                value={dept.short} 
+                                readOnly={!college.edit} 
+                                placeholder='Department Short Name'
+                                required
+                                onChange={(e) => updateShort(e, idx)}/>
+                            <input 
+                                className='w-full md:w-4/6 lg:w-4/6 outline-0'
+                                value={dept.long} 
+                                readOnly={!college.edit}
+                                placeholder='Department Full Name'
+                                onChange={(e) => updateLong(e, idx)}/>
+                            {college.edit && <button
+                                className='px-3 py-2 text-sm cursor-pointer rounded-2xl hover:bg-red-600 border border-red-600 text-red-600 hover:text-white transition-all'
+                                onClick={() => deleteDepartment(idx)}>Delete</button> }                           
+                        </div>
+                    </div>
+                )}
+                {college.edit && <button
+                    type='button'
+                    className='w-40 px-2 py-1 rounded-2xl border border-black text-black hover:text-white hover:bg-black cursor-pointer flex gap-1 text-sm'
+                    onClick={addDepartment}
+                    ><AddCircleOutlineIcon/>Add Department</button>}                                       
+            </form>
         </div>
     );
 }

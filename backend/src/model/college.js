@@ -3,7 +3,7 @@ import {Schema, model} from "mongoose";
 const collegeSchema = new Schema({
     name: {type: String, required: true, unique: true},
     shortName: {type: String, required: true},
-    departments: {type: Map, of: String},
+    departments: [{short: {type: String, required: true}, long: {type: String, required: true}}],
     examTypes: [String],
     buildings: [
         {

@@ -19,8 +19,10 @@ export default function Home() {
     const headers = useSelector(state => state.headers);
 
     useEffect(() => {
-        getAllExams();
-    }, [refresh]);
+        if(user?._id) {
+            getAllExams();            
+        }
+    }, [refresh, user]);
 
     const getAllExams = async () => {
         setLoading(true);
@@ -129,7 +131,7 @@ export default function Home() {
                                     style={{fontSize: "1.3rem"}}>
                                     domain
                                 </span>
-                                <p>{college.departments[user.department]}</p>
+                                <p>{user.department}</p>
                             </li>
 
                             <li className="mb-3 flex items-center gap-2 text-gray-600">
@@ -176,7 +178,7 @@ export default function Home() {
                         <div className="lg:w-1/2 w-full flex flex-col gap-5">
                             <div className="flex flex-col">
                                 <h1 className="text-gray-200">Allotted Place</h1>
-                                <p className="text-white">{allotment.building} - {allotment.classRoom.name}</p>
+                                <p className="text-white">{allotment.building.name} - {allotment.classRoom.name}</p>
                             </div>
                             <div>
                                 <h1 className="text-gray-200">Date</h1>
@@ -197,21 +199,21 @@ export default function Home() {
                 </div>}
 
                 {user?.type === 'student' && allotment?.building && 
-                <div className="mb-6 p-5 border border-gray-300 bg-white rounded-2xl flex flex-col gap-3">
-                    <div className="p-2 border-b border-gray-300 text-gray-800">ClassRoom: {allotment.classRoom.name}</div>
-                    <div 
-                        style={{gridTemplateRows: `repeat(${allotment.classRoom.rows}, 1fr)`, gridTemplateColumns: `repeat(${allotment.classRoom.columns}, 1fr)`}}
-                        className="grid gap-2 overflow-auto">
-                            {classRoom.map((row, rIdx) => 
-                                row.map((obj, cIdx) => 
-                                <div 
-                                    key={`${rIdx}${cIdx}`} 
-                                    className={`px-2 py-3 text-sm rounded-lg ${rIdx === allotment.row && cIdx === allotment.column ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-500'}`}
+                    <div className="mb-6 p-5 border border-gray-300 bg-white rounded-2xl flex flex-col gap-3">
+                        <div className="p-2 border-b border-gray-300 text-gray-800">ClassRoom: {allotment.classRoom.name}</div>
+                        <div 
+                            style={{gridTemplateRows: `repeat(${allotment.classRoom.rows}, 1fr)`, gridTemplateColumns: `repeat(${allotment.classRoom.columns}, 1fr)`}}
+                            className="grid gap-2 overflow-auto">
+                                {classRoom.map((row, rIdx) => 
+                                    row.map((obj, cIdx) => 
+                                    <div 
+                                        key={`${rIdx}${cIdx}`} 
+                                        className={`px-2 py-3 text-sm rounded-lg ${rIdx === allotment.row && cIdx === allotment.column ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-500'}`}
 
-                                    >{obj.usn}</div>))
-                            }
-                    </div>
-                </div>}
+                                        >{obj.usn}</div>))
+                                }
+                        </div>
+                    </div>}
 
 
                 {user?.type === 'admin' && <div className="mb-6 bg-white rounded-2xl border border-gray-300">

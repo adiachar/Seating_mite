@@ -17,6 +17,7 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
   const navigate = useNavigate();
   const {showAlert} = useAlert();
   const headers = useSelector(state => state.headers);
+  const [delLoading, setDelLoading] = useState(false);
 
   const deleteExamRequest = async () => {
     if(user.type === 'admin') {
@@ -45,7 +46,7 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
     <div onClick={() => selectExam(examReq)} className='w-full mb-2 p-5 border border-gray-300 rounded-2xl shadow hover:shadow-lg transition-al'>
 
       <div 
-        className="w-50 mb-2 px-2 py-1 rounded-xl border-gray-300 text-white flex items-center justify-between cursor-pointer bg-blue-500"
+        className="w-55 mb-2 px-2 py-1 rounded-xl border-gray-300 text-white flex items-center justify-between cursor-pointer bg-blue-500"
         > <h1>{examReq.type} - {getDate(examReq.date)}</h1>
         {selectedExam?._id === examReq._id && 
         <span 
@@ -54,6 +55,7 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
             check_circle
         </span>}
       </div>
+
       {examReq._id == selectedExam._id && <div className='w-full mt-3 p-2 flex gap-3 overflow-x-auto'>
           <button 
             className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white flex items-center gap-2'
@@ -68,6 +70,7 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
           {(user.type === 'admin') && (
             <>
           <button 
+              disabled = {delLoading}
               className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-red-700 hover:border-transparent hover:text-white flex items-center gap-2'
               onClick={() => deleteExamRequest()}
               ><DeleteIcon/>Delete Request</button>
@@ -83,7 +86,7 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
                 onClick={() => navigate("/allotment", {state: {examReq: examReq}})}
               ><BallotIcon/>View Allotment</button>  }
       </div>}
-      {((user.type === 'admin' || user.type === 'coordinator') && addStudents) && <AddEligibleStudents examReq={examReq}/>}
+      {((user.type === 'admin' || user.type === 'coordinator') && addStudents) && <AddEligibleStudents examReq={examReq} setRefresh={setRefresh}/>}
     </div>
   );
 }
@@ -93,11 +96,11 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
 
 const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
 
-function AddEligibleStudents({examReq}) {
+function AddEligibleStudents({examReq, setRefresh}) {
   const [loading, setLoading] = useState(false);
   const [students, setStudents] = useState([]);
   const allBranches = useSelector(state => state.college.departments);
-  const [branch, setBranch] = useState(Object.keys(allBranches)[0]);
+  const [branch, setBranch] = useState(allBranches[0].short);
   const [semester, setSemester] = useState(1);
   const [subject, setSubject] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -105,36 +108,39 @@ function AddEligibleStudents({examReq}) {
   const headers = useSelector(state => state.headers);
 
   const submitData = async (e) => {
-      e.preventDefault();
-      setLoading(true);
+    e.preventDefault();
+    setLoading(true);
 
-      if(!students || students.length === 0) {
-          showAlert("Please Choose a student data (xml file)!", "error");
-          setLoading(false);
-          return;
-      }
+    if(!students || students.length === 0) {
+      showAlert("Please Choose a student data (xml file)!", "error");
+      setLoading(false);
+      return;
+    }
 
-      if(!branch || !semester || !subject) {
-          showAlert("Please fill all the fields!", "error");
-          setLoading(false);
-          return;
-      }
+    if(!branch || !semester || !subject) {
+      showAlert("Please fill all the fields!", "error");
+      setLoading(false);
+      return;
+    }
+    
+    let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add/eligible-students`, {branch, semester, subject, students, examId: examReq._id}, {headers});
 
-      let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add/eligible-students`, {branch, semester, subject, students, examId: examReq._id}, {headers})
-      .then(res => {
-          setLoading(false);
-          if(res.status === 200) {
-              showAlert("Data Submitted Successfully!", "success");
-              setIsSubmitted(true);
-          } else {
-              showAlert("Something went wrong!", "error");
-          }
-      }).catch(err => {
-          console.log(err);
-          showAlert("Something went wrong!", "error");
-          setLoading(false);
-          return;
-      });
+    try {
+      setLoading(false);
+      if(response.status === 200) {
+        showAlert("Data Submitted Successfully!", "success");
+        setIsSubmitted(true); 
+        setRefresh(r => !r);
+      } else {
+        showAlert("Something went wrong!", "error");
+      }          
+    }
+    catch(err) {
+      console.log(err);
+      showAlert("Something went wrong!", "error");
+      setLoading(false);
+      return;
+    };
   }
 
   return (
@@ -149,8 +155,8 @@ function AddEligibleStudents({examReq}) {
             name='branch' 
             value={branch} 
             onChange={e => setBranch(e.target.value)}>
-            {Object.keys(allBranches).map((branch, index) => (
-              <option key={index} value={branch}>{branch}</option>
+            {allBranches.map((obj, idx) => (
+              <option key={idx} value={obj.short}>{obj.short}</option>
             ))}
           </select>          
         </label>

@@ -3,7 +3,6 @@ import {Routes, Route, Router} from 'react-router-dom';
 import Sign from './components/user/Sign';
 import { Provider } from 'react-redux';
 import {store} from './app/store';
-import AllRequests from './components/main/AllRequests';
 import Navbar from './Navbar';
 import AddNewExam from './components/main/admin/AddNewExam';
 import ViewExamDetails from './components/main/ViewExamDetails';
@@ -24,7 +23,6 @@ function App() {
           <div className='h-full'>
             <Routes>
               <Route path='/*' element={<Home/>} />
-              <Route path='all-requests' element={<AllRequests/>} />
               <Route path="/sign" element={<Sign/>} />
               <Route path="/add-exam-request" element={<AddNewExam/>} />
               <Route path='/view-exam-details' element={<ViewExamDetails/>}/>

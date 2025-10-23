@@ -103,3 +103,23 @@ export const deleteBuilding = async (req, res) => {
         return res.status(500).json({message: "Internal Server Error!"});
     }
 }
+
+export const updateDepartmentsData = async (req, res) => {
+    try {
+        const {collegeId, departments} = req.body;
+        
+        const college = await College.findById(collegeId);
+
+        if(!college) {
+            return res.status(404).json({message: "College Not Found!"});
+        }
+
+        college.departments = departments;
+        await college.save();
+
+        return res.status(200).json({message: "Departments Updated Successfully!"});
+    } catch(err) {
+        console.log(err);
+        return res.status(500).json({message: "Internal Server Error!"});
+    }
+}

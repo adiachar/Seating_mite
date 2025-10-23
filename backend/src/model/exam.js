@@ -8,23 +8,29 @@ const examSchema = new Schema([
             {branch: {type: String, required: true}, semester: {type: Number, required: true}, subject: {type: String, required: true}, students: [String]}
         ],
         isAllotted: {type: Boolean, default: false},
-        allotment: [
-            {
-                building: {type: String, required: true},
-                floor: {type: String, required: true},
-                classRoom: {
-                    name: {type: String, required: true},
-                    rows: {type: Number, required: true},
-                    columns: {type: Number, required: true},
-                    seats: [[{
-                        usn: {type: String, required: true}, 
-                        branch: {type: String, required: true},
-                        subject: {type: String, required: true},
-                        semester: {type: String, required: true},
-                    }]]
-                }
+        allotment: [{
+            building: {
+                _id: {type: String, required: true},
+                name: {type: String, required: true}
+            },
+            floor: {
+                _id: {type: String, required: true},
+                name: {type: String, required: true}
+            },
+            classRoom: {
+                _id: {type: String, required: true},
+                name: {type: String, required: true},
+                rows: {type: Number, required: true},
+                columns: {type: Number, required: true},
+                isFinalized: {type: Boolean, default: false},
+                seats: [[{
+                    usn: {type: String, required: true}, 
+                    branch: {type: String, required: true},
+                    subject: {type: String, required: true},
+                    semester: {type: String, required: true},
+                }]]
             }
-        ],
+        }],
         createdOn: {type: Date, default: Date.now}
     }
 ]);

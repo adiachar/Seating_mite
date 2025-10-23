@@ -4,7 +4,7 @@ import {sendEmail} from "../utils/mail.js";
 
 export const getExams = async (req, res) => {
     try {
-        const exams = await Exam.find().select('-eligibleStudents -allotment').lean();
+        const exams = await Exam.find().lean();
 
         return res.status(200).json({exams: exams});
     } catch(err) {
@@ -38,6 +38,8 @@ export const getEligibleStudents = async (req, res) => {
 export const addEligibleStudents = async (req, res) => {
     try {
         const {branch, semester, subject, students, examId} = req.body;
+
+        console.log(req.body);
 
         if(!branch || !semester || !subject || !students || students.length === 0) {
             return res.status(400).json({message: "Please provide all the required fields!"});
@@ -90,7 +92,7 @@ export const addExam = async (req, res) => {
         await newExam.save();
 
         const allUsers = User.find({type: 'coordinator'});
-        console.log(allUsers);
+        
         if(allUsers?.length > 0) {
             for(let user of allUsers) {
                 sendEmail(user.email, 

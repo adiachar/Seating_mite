@@ -1,4 +1,4 @@
-import { Button } from "@mui/material";
+import { Button, styled } from "@mui/material";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
@@ -6,6 +6,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { useAlert } from "../../../AlertContext";
+import {closestCorners, DndContext} from "@dnd-kit/core";
+import {SortableContext, verticalListSortingStrategy, useSortable} from "@dnd-kit/sortable";
+import {CSS} from "@dnd-kit/utilities";
 
 let batchTable = [];
 
@@ -13,53 +16,63 @@ export default function AllotSeats() {
     const collegeData = useSelector(state => state.college);
     const [college, setCollege] = useState(null);
     const examRequest = useLocation().state.examReq;
-    const [examReq, setExamReq] = useState(null);
     const headers = useSelector(state => state.headers);
     const [noOfBatch, setNoOfBatch] = useState(2);
     const [noOfStudentCategories, setNoOfStudentCategories] = useState(0);
     const navigate = useNavigate();
     const {showAlert} = useAlert();
+    const [stdCategory, setStdCategory] = useState([]);
+    const [savingAllotment, setSavingAllotment] = useState(false);
+    const [isAllotmentSaved, setIsAllotmentSaved] = useState(false);
 
-    const getCollegeData = async () => {
+    const getCollege = async () => {
         let currentCollege = {...collegeData};
-            currentCollege.buildings = currentCollege.buildings.map(building => 
-                {return {...building, isSelected: false, floors: building.floors.map(floor => 
-                    {return {...floor, isSelected: false, classRooms: floor.classRooms.map(classRoom => 
-                        {return {...classRoom, isSelected: false, seats: Array.from({length: classRoom.rows}, () => Array(classRoom.columns).fill(0))}})}})}});
-        setCollege(currentCollege);
-    }
 
-    const getEligibleStudents = async (examRequest) => {
-        try {
-            const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/exam/eligible-students/${examRequest._id}`, {headers});
-            if(response.status === 200) {
-                setExamReq(er => { return {...examRequest, eligibleStudents: response.data.eligibleStudents}});
-            }                
-        } catch(err) {
-            showAlert("Something went wrong while getting eligible students!", "error");                 
-        }
+        // For faster lookup i am using Set()
+        const buildingIds = new Set(examRequest.allotment.map(allotted => allotted.building._id));
+        const floorIds = new Set(examRequest.allotment.map(allotted => allotted.floor._id));
+        const classRoomIds = new Set(examRequest.allotment.map(allotted => allotted.classRoom._id));
+
+        currentCollege.buildings = currentCollege.buildings.map(building => {
+            return {...building, isSelected: buildingIds.has(building._id), floors: building.floors.map(floor => {
+                return {...floor, isSelected: floorIds.has(floor._id), classRooms: floor.classRooms.map(classRoom => {   
+                    let isClassRoomAllotted= classRoomIds.has(classRoom._id);
+                    let seats = null;
+                    let isFinalized = false;
+
+                    if(isClassRoomAllotted) {
+                        for(let allotted of examRequest.allotment) {
+                            if(allotted.classRoom._id === classRoom._id) {
+                                seats = allotted.classRoom.seats;
+                                isFinalized = allotted.classRoom.isFinalized;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(!seats) {
+                        seats = Array.from({length: classRoom.rows}, () => Array(classRoom.columns).fill(0))
+                    }
+
+                    return {...classRoom, isSelected: isClassRoomAllotted, isFinalized: isFinalized, seats: seats}
+                })}
+            })}
+        });
+        setCollege(currentCollege);
     }
 
     useEffect(() => {
         if(!collegeData?._id) {
             return navigate('/');
         }
-
-        getCollegeData();
-
-        if(examRequest._id) {
-            getEligibleStudents(examRequest);
-            
-        } else {
-            navigate('/');
+        
+        if(examRequest?._id) {
+            getCollege();
+            console.log(examRequest.eligibleStudents);
+            setStdCategory(examRequest.eligibleStudents.map((elStd) => {return {...elStd}}));
+            setNoOfStudentCategories(examRequest.eligibleStudents.length);
         }
     }, []);
-
-    useEffect(() => {
-        if(examReq) {
-            setNoOfStudentCategories(examReq.eligibleStudents.length);
-        }
-    }, [examReq]);
 
     const handleBuildingSelection = (e, bIdx) => {
         let updatedCollege = college;
@@ -70,8 +83,8 @@ export default function AllotSeats() {
                         {return {...floor, isSelected: false, classRooms: floor.classRooms.map(classRoom => 
                             {return {...classRoom, isSelected: false}})}})
         }
-        
         setCollege({...updatedCollege});
+        setIsAllotmentSaved(false);
     }
 
     const handleFloorSelection = (e, bIdx, fIdx) => {
@@ -84,16 +97,25 @@ export default function AllotSeats() {
 
         }
         setCollege({...updatedCollege});
+        setIsAllotmentSaved(false);
+
     }
 
     const handleClassRoomSelection = (e, bIdx, fIdx, cRIdx) => {
         let updatedCollege = college;
         updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx].isSelected = e.target.checked;
         setCollege({...updatedCollege});
+        setIsAllotmentSaved(false);
+    }
+
+    const finalizeClass = (e, bIdx, fIdx, cRIdx) => {
+        let updatedCollege = college;
+        updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx].isFinalized = e.target.checked;
+        setCollege({...updatedCollege});
+        setIsAllotmentSaved(false);
     }
 
     const createBatch = () => {
-        let stdCategory = examReq.eligibleStudents.map((elStd) => {return {...elStd}});
         let eachBatchSize = parseInt(( stdCategory.length / noOfBatch ) + ( stdCategory.length % noOfBatch ));
         let batches = Array.from({length: noOfBatch}, (_) => Array());
         
@@ -129,7 +151,7 @@ export default function AllotSeats() {
     }
 
     const allotSeat = () => {
-        if(examReq?.eligibleStudents?.length === 0) {
+        if(examRequest?.eligibleStudents?.length === 0) {
             alert("No Eligible Students Added!");
             return;
         }
@@ -166,21 +188,20 @@ export default function AllotSeats() {
         }
 
         setCollege({...updatedCollege});
+        setIsAllotmentSaved(false);
         showAlert("Seats allotted successfully!", "success");
     }
 
-    const finalizeAllotment = async () => {
+    const saveAllotment = async () => {
         let allotment = [];
-
+        setSavingAllotment(true);
         for(let building of college.buildings) {
             if(building.isSelected) {
                 for(let floor of building.floors) {
                     if(floor.isSelected) {
                         for(let classRoom of floor.classRooms) {
                             if(classRoom.isSelected) {
-                                delete classRoom.isSelected;
-                                delete classRoom._id;
-                                allotment.push({building: building.name, floor: floor.name, classRoom: classRoom});
+                                allotment.push({building: {_id: building._id, name: building.name}, floor: {_id: floor._id, name: floor.name}, classRoom: classRoom});
                             }
                         }                        
                     }
@@ -189,16 +210,35 @@ export default function AllotSeats() {
         }
 
         try {
-            let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/exam/allotment`, {examId: examReq, allotment}, {headers});
+            let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/exam/allotment`, {examId: examRequest._id, allotment}, {headers});
 
             if(response.status == 200) {
-                showAlert("Seats Allocation finalized Successfully!", "success");
+                setSavingAllotment(false);
+                setIsAllotmentSaved(true);
+                showAlert("Seats allocation saved Successfully!", "success");
             }
             
         } catch(err) {
             console.log(err);
             showAlert("Something went wrong!", "error");
         }
+    }
+
+    const handleDragEnd = event => {
+        const {active, over} = event
+
+        if(active.id === over.id) return;
+
+        let activeIdx = stdCategory.findIndex(obj => obj._id === active.id);
+        let overIdx = stdCategory.findIndex(obj => obj._id === over.id);
+
+        let updatedStdCategory = stdCategory;
+        let temp = updatedStdCategory[activeIdx];
+        updatedStdCategory[activeIdx] = updatedStdCategory[overIdx];
+        updatedStdCategory[overIdx] = temp;
+        
+        setStdCategory([...updatedStdCategory]);
+        
     }
     
     return (
@@ -236,7 +276,7 @@ export default function AllotSeats() {
                                                                         className="ml-2 size-5 accent-black"
                                                                         id={`${bIdx}${fIdx}${cRIdx}`}
                                                                         type="checkbox"
-                                                                        checked={classRoom.isSelected}
+                                                                        checked={classRoom.isSelected || false}
                                                                         onChange={(e) => handleClassRoomSelection(e, bIdx, fIdx, cRIdx)}/>  
                                                                 </label>
                                                             </div>
@@ -250,47 +290,75 @@ export default function AllotSeats() {
                             </div>
                         )}                            
                     </div>
+
                     <div className="my-5 p-5 flex flex-col gap-2 overflow-auto border border-gray-600 rounded-2xl">
-                        <div className="w-fulls flex items-center gap-3">
-                            <h1>Number of branches for each Class:</h1>
-                            <div className="flex items-center">
-                                <Button 
-                                    sx={{
-                                        minWidth: "auto",
-                                        padding: "0.4rem",
-                                        backgroundColor: "black", 
-                                        color: "white",
-                                        borderRadius: "1rem"
-                                    }}
-                                    size="small" 
-                                    variant="contained" 
-                                    onClick={() => setNoOfBatch(n => n - 1 >= 1 ? n - 1 : 1)}
-                                ><RemoveIcon sx={{fontSize: "1rem"}}/></Button>
+                    
+                        {stdCategory && 
+                        <div className="max-w-100 flex flex-col p-3 gap-5 bg-gray-200 rounded-2xl">
+                            <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
+                                <div className="flex flex-col gap-2">
+                                    <h1>Branch Priority</h1>
+                                    <SortableContext items={stdCategory.map(item => item._id)} strategy={verticalListSortingStrategy}>
+                                        {stdCategory.map((stdCat, idx) => 
+                                            <StudentCategory key={stdCat._id} id={stdCat._id} idx={idx} category={stdCat}/>
+                                        )}                                           
+                                    </SortableContext>
+                                </div>
+                            </DndContext>
 
-                                <h1 className="mx-2 px-4 py-2 text-xl bg-gray-200 rounded-2xl">{noOfBatch}</h1>
+                            <div className="w-fulls flex flex-col">
+                                <h1>Number of branches for each Class:</h1>
+                                <div className="flex items-center">
+                                    <button 
+                                        className="h-8 w-8 bg-gray-300 text-black rounded-full flex items-center justify-center cursor-pointer"
+                                        onClick={() => setNoOfBatch(n => n - 1 >= 1 ? n - 1 : 1)}
+                                    ><RemoveIcon sx={{fontSize: "1rem"}}/></button>
 
-                                <Button 
-                                    sx={{
-                                        minWidth: "auto",
-                                        padding: "0.4rem",
-                                        backgroundColor: "black", 
-                                        color: "white",
-                                        borderRadius: "1rem"
-                                    }}
-                                    size="small" 
-                                    variant="contained" 
-                                    onClick={() => setNoOfBatch(n => n + 1 <= noOfStudentCategories ? n + 1 : noOfStudentCategories)}
-                                ><AddIcon sx={{fontSize: "1rem"}}/></Button> 
+                                    <h1 className="mx-2 px-4 py-2 text-lg ">{noOfBatch}</h1>
+
+                                    <button 
+                                        className="h-8 w-8 bg-gray-300 text-black rounded-full flex items-center justify-center cursor-pointer"
+                                        onClick={() => setNoOfBatch(n => n + 1 <= noOfStudentCategories ? n + 1 : noOfStudentCategories)}
+                                    ><AddIcon sx={{fontSize: "1rem"}}/></button> 
+                                </div>
                             </div>
-                            
-                        </div>
+                        </div>}
+
                         <div className="flex gap-2">
-                           <button
-                                className='w-auto px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white inline-block'
-                                onClick={allotSeat} variant="outlined" color="success">Allot Seats</button>
-                            <button
-                                className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-green-600 hover:border-transparent hover:text-white flex items-center gap-2'
-                                onClick={finalizeAllotment} variant="contained" color="success">Finalize Allotment</button> 
+                            <Button
+                                variant='outlined' 
+                                color="dark" 
+                                onClick={allotSeat}
+                                sx={{
+                                    padding: "0.2rem 0.5rem",
+                                    textTransform: "capitalize",
+                                    borderRadius: "0.8rem",
+                                    color: "black",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    boxShadow: "none",
+                                    ":hover": {backgroundColor: "black", color: "white"}
+                                }}
+                                >Allot Seats</Button>
+                            <Button 
+                                disabled={isAllotmentSaved} 
+                                loading={savingAllotment}
+                                variant='outlined' 
+                                color="dark" 
+                                onClick={saveAllotment}
+                                sx={{
+                                    padding: "0.2rem 0.5rem",
+                                    textTransform: "capitalize",
+                                    borderRadius: "0.8rem",
+                                    color: "black",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    boxShadow: "none",
+                                    ":hover": {backgroundColor: "#16A34A", color: "white"}
+                                }}
+                                >Save Allotment</Button>  
                         </div>
                     </div>
                     <div>
@@ -303,22 +371,35 @@ export default function AllotSeats() {
                                             floor.classRooms.map((classRoom, cRIdx) => 
                                                 (classRoom.isSelected ? 
                                                     (<div key={`${bIdx}${fIdx}${cRIdx}`} className="mb-2 p-2 border rounded">
-                                                        <div className="flex flex-wrap gap-2">
-                                                            <p 
-                                                                className="px-2 py-1 font-bold bg-neutral-300 inline rounded"
-                                                                >ClassRoom: 
-                                                                <span className="font-normal">{classRoom.name}</span>
-                                                            </p>
-                                                            <p 
-                                                                className="px-2 py-1 font-bold bg-neutral-300 inline rounded"
-                                                                >Row: 
-                                                                <span className="font-normal">{classRoom.rows}</span>
-                                                            </p>
-                                                            <p 
-                                                                className="px-2 py-1 font-bold bg-neutral-300 inline rounded"
-                                                                >Column: 
-                                                                <span className="font-normal">{classRoom.columns}</span>
-                                                            </p>
+                                                        <div className="flex flex-wrap justify-between items-center">
+                                                            <div className="flex flex-wrap gap-2">
+                                                                <p 
+                                                                    className="px-2 py-1 font-bold bg-neutral-300 inline rounded"
+                                                                    >ClassRoom: 
+                                                                    <span className="font-normal">{classRoom.name}</span>
+                                                                </p>
+                                                                <p 
+                                                                    className="px-2 py-1 font-bold bg-neutral-300 inline rounded"
+                                                                    >Row: 
+                                                                    <span className="font-normal">{classRoom.rows}</span>
+                                                                </p>
+                                                                <p 
+                                                                    className="px-2 py-1 font-bold bg-neutral-300 inline rounded"
+                                                                    >Column: 
+                                                                    <span className="font-normal">{classRoom.columns}</span>
+                                                                </p>                                                                
+                                                            </div>
+
+                                                            <label htmlFor={`${bIdx}${fIdx}${cRIdx}f`} className="flex items-center gap-2">
+                                                                Finalize
+                                                                <input  
+                                                                    id={`${bIdx}${fIdx}${cRIdx}f`}
+                                                                    type="checkbox"
+                                                                    className="ml-2 size-5 accent-green-600"
+                                                                    checked={classRoom.isFinalized}
+                                                                    onChange={(e) => finalizeClass(e, bIdx, fIdx, cRIdx)}
+                                                                />                                                                
+                                                            </label>
                                                         </div>
                                                         <div 
                                                             className={`w-full mt-3 grid row-auto gap-2 place-items-center overflow-auto`}
@@ -338,4 +419,26 @@ export default function AllotSeats() {
             : <p>No Rooms Available</p>}
         </div>
     )
+}
+
+function StudentCategory({id, idx, category}) {
+    const {attributes, listeners, setNodeRef, transform, transition} = useSortable({id});
+    const style = {transition, transform: CSS.Transform.toString(transform)}
+
+    return (
+        <div 
+            ref={setNodeRef} 
+            {...attributes} 
+            {...listeners} 
+            className="p-2 bg-white cursor-pointer rounded-xl"
+            style={style}
+            >   
+            <h1 className="flex gap-4">
+                <span>{idx + 1}</span>
+                <span><span className="text-gray-600">Branch: </span>{category.branch} </span>
+                <span><span className="text-gray-600">Semester: </span>{category.semester}</span>
+            </h1>
+        </div>
+    )
+
 }

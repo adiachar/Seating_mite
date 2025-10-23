@@ -142,13 +142,12 @@ function SignIn({userType}) {
 
     const getCollege = async (user) => {
         try {
-        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${user.college}`, {headers});
+            const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/college/${user.college}`, {headers});
         if(response.status === 200) {
             dispatch(setCollege(response.data.college))
         }
         } catch(err) {
             console.log(err);
-            alert("Got error from the server while getting the college data");
         }
     }
 
@@ -295,7 +294,7 @@ function SignUp({userType}) {
                 formik.setFieldValue('department', college.shortName);
 
             } else {
-                formik.setFieldValue('department', Object.keys(college.departments)[0]);
+                formik.setFieldValue('department', college.departments[0].long);
             }
         }
     }, [college]);
@@ -422,8 +421,8 @@ function SignUp({userType}) {
                         id="department" 
                         value={formik.values.department} 
                         onChange={formik.handleChange}>
-                        {(formik.values.type === "student" || formik.values.type === "coordinator" ) ? Object.keys(college.departments).map((val, idx) => {
-                            return (<option value={val} key={idx}>{val}</option>);
+                        {(formik.values.type === "student" || formik.values.type === "coordinator" ) ? college.departments.map((obj, idx) => {
+                            return (<option value={obj.long} key={idx}>{obj.long}</option>);
                         }) : <option value={college.shortName}>{college.shortName}</option>}
                     </select>
                 </div>
@@ -438,7 +437,7 @@ function SignUp({userType}) {
                         lock
                     </span>
                     <input 
-                    className='w-10/12 ps-3 outline-none w-full' 
+                    className='ps-3 outline-none w-full' 
                     type="password" 
                     name='password' 
                     placeholder='password' 
@@ -458,7 +457,7 @@ function SignUp({userType}) {
                         lock_reset
                     </span>
                     <input 
-                    className='w-10/12 ps-3 outline-none w-full' 
+                    className='ps-3 outline-none w-full' 
                     type="password"
                     name='conPass' 
                     placeholder='Re-enter your password'
@@ -566,7 +565,7 @@ function StudentSignUp() {
 
     useEffect(() => {
         if(college._id) {
-            formik.setFieldValue('department', Object.keys(college.departments)[0]);
+            formik.setFieldValue('department', college.departments[0].long);
         }
     }, [college]);
 
@@ -716,8 +715,8 @@ function StudentSignUp() {
                             id="department" 
                             value={formik.values.department} 
                             onChange={formik.handleChange}>
-                            {college?.name && Object.keys(college.departments).map((val, idx) => 
-                                <option value={val} key={idx}>{val}</option>
+                            {college?.name && college.departments.map((obj, idx) => 
+                                <option value={obj.long} key={idx}>{obj.long}</option>
                             )}
                         </select>
                     </div>
