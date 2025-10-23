@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { useAlert } from "../../../AlertContext";
-import {closestCorners, DndContext} from "@dnd-kit/core";
+import {closestCorners, DndContext, DragOverlay, useDraggable} from "@dnd-kit/core";
 import {SortableContext, verticalListSortingStrategy, useSortable} from "@dnd-kit/sortable";
 import {CSS} from "@dnd-kit/utilities";
 
@@ -24,6 +24,7 @@ export default function AllotSeats() {
     const [stdCategory, setStdCategory] = useState([]);
     const [savingAllotment, setSavingAllotment] = useState(false);
     const [isAllotmentSaved, setIsAllotmentSaved] = useState(false);
+    const [seatDragActiveId, setSeatDragActiveId] = useState(null);
 
     const getCollege = async () => {
         let currentCollege = {...collegeData};
@@ -223,8 +224,8 @@ export default function AllotSeats() {
         }
     }
 
-    const handleDragEnd = event => {
-        const {active, over} = event
+    const handleBranchDragEnd = event => {
+        const {active, over} = event;
 
         if(active.id === over.id) return;
 
@@ -236,10 +237,35 @@ export default function AllotSeats() {
         updatedStdCategory[activeIdx] = updatedStdCategory[overIdx];
         updatedStdCategory[overIdx] = temp;
         
-        setStdCategory([...updatedStdCategory]);
-        
+        setStdCategory([...updatedStdCategory]);   
+    }
+
+    const handleSeatDragStart = (event) => {
+        setSeatDragActiveId(event.active.id);
     }
     
+    const handleSeatDragEnd = (event) => {
+        const {active, over} = event;
+
+        if(!over || active.id === over.id) {
+            setSeatDragActiveId(null);
+            return;
+        }
+
+        if(active.id === over.id) return;
+
+        let [aBIdx, aFIdx, aCRIdx, aSRIdx, aSCIdx] = active.id.split('-');
+        let [oBIdx, oFIdx, oCRIdx, oSRIdx, oSCIdx] = over.id.split('-');
+
+        let updatedCollege = college;
+        let temp = updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].seats[aSRIdx][aSCIdx];
+        updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].seats[aSRIdx][aSCIdx] = updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].seats[oSRIdx][oSCIdx];
+        updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].seats[oSRIdx][oSCIdx] = temp;
+
+        setCollege({...updatedCollege});
+        setSeatDragActiveId(null);
+    }
+
     return (
         <div className="w-full flex flex-col items-center">
             {college? 
@@ -294,7 +320,7 @@ export default function AllotSeats() {
                     
                         {stdCategory && 
                         <div className="max-w-100 flex flex-col p-3 gap-5 bg-gray-200 rounded-2xl">
-                            <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
+                            <DndContext onDragEnd={handleBranchDragEnd} collisionDetection={closestCorners}>
                                 <div className="flex flex-col gap-2">
                                     <h1>Branch Priority</h1>
                                     <SortableContext items={stdCategory.map(item => item._id)} strategy={verticalListSortingStrategy}>
@@ -400,11 +426,23 @@ export default function AllotSeats() {
                                                                 />                                                                
                                                             </label>
                                                         </div>
-                                                        <div 
-                                                            className={`w-full mt-3 grid row-auto gap-2 place-items-center overflow-auto`}
-                                                            style={{gridTemplateColumns: `repeat(${classRoom.columns}, auto)`}}>
-                                                            {classRoom.seats.map( row => row.map((obj, idx) => <div key={idx} className="w-full p-5 bg-neutral-200">{obj.usn == 0 ? '-' : obj.usn}</div>))}
-                                                        </div>
+                                                        <DndContext onDragStart={handleSeatDragStart} onDragEnd={handleSeatDragEnd}>
+                                                            <div 
+                                                                className={`w-full mt-3 grid row-auto gap-2 place-items-center overflow-auto`}
+                                                                style={{gridTemplateColumns: `repeat(${classRoom.columns}, auto)`}}>
+                                                                {classRoom.seats.map( (row, sRIdx) => row.map((obj, sCIdx) => 
+                                                                    <Seat key={`${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`} id={`${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`} seat={obj}/>
+                                                                ))}
+                                                            </div>
+
+                                                            <DragOverlay>
+                                                                {seatDragActiveId ? (
+                                                                    <div className="w-full p-5 bg-gray-300 cursor-grab shadow-xl ">
+                                                                        {classRoom.seats[seatDragActiveId.split('-')[3]][seatDragActiveId.split('-')[4]]?.usn}
+                                                                    </div>
+                                                                ) : null}
+                                                            </DragOverlay>                                                          
+                                                        </DndContext>
                                                     </div>) : null
                                                 )   
                                             ) : null
@@ -439,5 +477,20 @@ function StudentCategory({id, idx, category}) {
             </h1>
         </div>
     )
+}
 
+function Seat({id, seat}) {
+    const {attributes, listeners, setNodeRef, transform,  transition, isDragging} = useSortable({id});
+    const style = {transform: CSS.Transform.toString(transform), transition: "transform 0s", opacity: isDragging ? 0 : 1};
+
+    return (
+        <div
+            ref={setNodeRef} 
+            {...attributes} 
+            {...listeners} 
+            style={style} 
+            className="w-full p-5 bg-gray-200 cursor-pointer">
+            {seat.usn == 0 ? '-' : seat.usn}
+        </div>
+    );
 }
