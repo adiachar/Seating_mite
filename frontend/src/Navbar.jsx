@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { setHeader, setUser, setCollege } from './features/seatingSlice';
+import {useAlert} from "./AlertContext"
 
 export default function Navbar() {
   const user = useSelector((state) => state.user);
@@ -10,6 +11,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const headers = useSelector(state => state.headers);
+  const showAlert = useAlert();
 
   useEffect(() => {
     const validateToken = async (token) => {
@@ -47,8 +49,7 @@ export default function Navbar() {
         dispatch(setCollege(response.data.college));
       }
     } catch(err) {
-      console.log(err);
-      alert("Got error from the server while getting the college data");
+      showAlert("Got error from the server while getting the college data", "error");
     }
   }
 

@@ -26,6 +26,7 @@ export default function AllotSeats() {
     const [savingAllotment, setSavingAllotment] = useState(false);
     const [isAllotmentSaved, setIsAllotmentSaved] = useState(false);
     const [seatDragActiveId, setSeatDragActiveId] = useState(null);
+    const [openContextMenu, setOpenContextMenu] = useState({id: '', open: false})
 
     const getCollege = async () => {
         let currentCollege = {...collegeData};
@@ -56,7 +57,7 @@ export default function AllotSeats() {
                         seats = Array.from({length: classRoom.rows}, () => Array(classRoom.columns).fill(0))
                     }
 
-                    return {...classRoom, isSelected: isClassRoomAllotted, isFinalized: isFinalized, seats: seats}
+                    return {...classRoom, edit: false, isSelected: isClassRoomAllotted, isFinalized: isFinalized, seats: seats}
                 })}
             })}
         });
@@ -259,18 +260,48 @@ export default function AllotSeats() {
             return;
         }
 
-        if(active.id === over.id) return;
-
         let [aBIdx, aFIdx, aCRIdx, aSRIdx, aSCIdx] = active.id.split('-');
         let [oBIdx, oFIdx, oCRIdx, oSRIdx, oSCIdx] = over.id.split('-');
 
         let updatedCollege = college;
+
+        if(!updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].edit || !updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].edit) {
+            return;
+        }
+
         let temp = updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].seats[aSRIdx][aSCIdx];
         updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].seats[aSRIdx][aSCIdx] = updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].seats[oSRIdx][oSCIdx];
         updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].seats[oSRIdx][oSCIdx] = temp;
 
         setCollege({...updatedCollege});
         setSeatDragActiveId(null);
+    }
+
+    const handleContextMenu = (id, open) => {
+        setOpenContextMenu({id: id, open: open});
+    }
+
+    const handleUsnChange = (e, bIdx, fIdx, cRIdx, sRIdx, sCIdx) => {
+        let updatedCollege = college;
+        updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx].seats[sRIdx][sCIdx].usn = e.target.value;
+
+        setCollege({...updatedCollege});
+    }
+
+    const handleClassRoomEdit = (bIdx, fIdx, cRIdx) => {
+        let updatedCollege = college;
+        updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx].edit = !updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx].edit;
+        setCollege({...updatedCollege});
+    }
+
+    const getSeat = (id) => {
+        const [bIdx, fIdx, cRIdx, sRIdx, sCIdx] = id.split('-');
+        return college.buildings[bIdx].floors[fIdx].classRooms[cRIdx].seats[sRIdx][sCIdx];
+    }
+
+    const getClassRoom = (id) => {
+        const [bIdx, fIdx, cRIdx, sRIdx, sCIdx] = id.split('-');
+        return college.buildings[bIdx].floors[fIdx].classRooms[cRIdx];
     }
 
     return (
@@ -406,51 +437,71 @@ export default function AllotSeats() {
                     <div>
                         <h1 className="font-semibold text-xl text-center text-gray-500">Selected classes for Allotment</h1>
                         <div className="flex flex-col">
-                            {college.buildings.map((building, bIdx) => 
-                                (building.isSelected ? 
-                                    building.floors.map((floor, fIdx) => 
-                                        (floor.isSelected ?
-                                            floor.classRooms.map((classRoom, cRIdx) => 
-                                                (classRoom.isSelected ? 
-                                                    (<div key={`${bIdx}${fIdx}${cRIdx}`} className="mb-6 p-5 border border-gray-300 bg-white rounded-2xl flex flex-col gap-3">
-                                                        <div className="p-2 flex flex-wrap justify-between items-center  border-b border-gray-300 text-gray-800">
-                                                            <div className="">ClassRoom: {classRoom.name}</div>
-
-                                                            <label htmlFor={`${bIdx}${fIdx}${cRIdx}f`} className="flex items-center gap-2">
-                                                                Finalize
-                                                                <input  
-                                                                    id={`${bIdx}${fIdx}${cRIdx}f`}
-                                                                    type="checkbox"
-                                                                    className="ml-2 size-5 accent-green-600"
-                                                                    checked={classRoom.isFinalized}
-                                                                    onChange={(e) => finalizeClass(e, bIdx, fIdx, cRIdx)}
-                                                                />                                                                
-                                                            </label>
-                                                        </div>
-                                                        <DndContext onDragStart={handleSeatDragStart} onDragEnd={handleSeatDragEnd}>
+                            <DndContext onDragStart={handleSeatDragStart} onDragEnd={handleSeatDragEnd}>
+                                {college.buildings.map((building, bIdx) => 
+                                    (building.isSelected ? 
+                                        building.floors.map((floor, fIdx) => 
+                                            (floor.isSelected ?
+                                                floor.classRooms.map((classRoom, cRIdx) => 
+                                                    (classRoom.isSelected ? 
+                                                        (<div key={`${bIdx}${fIdx}${cRIdx}`} className="mb-6 p-5 border border-gray-300 bg-white rounded-2xl flex flex-col gap-3">
+                                                            <div className="p-2 flex flex-wrap justify-between items-center  border-b border-gray-300 text-gray-800">
+                                                                
+                                                                <div className="flex gap-3 items-center">
+                                                                    <div className="">ClassRoom: {classRoom.name}</div>
+                                                                    {!classRoom.edit && <button
+                                                                        onClick={() => handleClassRoomEdit(bIdx, fIdx, cRIdx)}
+                                                                        className="px-3 py-2 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white outline-0 rounded-2xl text-sm transition-colors">
+                                                                        Edit
+                                                                    </button>}
+                                                                    {classRoom.edit && <button
+                                                                        onClick={() => handleClassRoomEdit(bIdx, fIdx, cRIdx)}
+                                                                        className="px-3 py-2 border border-green-600 text-green-600 hover:bg-green-600 hover:text-white outline-0 rounded-2xl text-sm transition-colors">
+                                                                        Save
+                                                                    </button>}
+                                                                </div>
+                                                                <label htmlFor={`${bIdx}${fIdx}${cRIdx}f`} className="flex items-center gap-2">
+                                                                    Finalize
+                                                                    <input  
+                                                                        id={`${bIdx}${fIdx}${cRIdx}f`}
+                                                                        type="checkbox"
+                                                                        className="ml-2 size-5 accent-green-600"
+                                                                        checked={classRoom.isFinalized}
+                                                                        onChange={(e) => finalizeClass(e, bIdx, fIdx, cRIdx)}
+                                                                    />                                                                
+                                                                </label>
+                                                            </div>
+                                                            
                                                             <div 
                                                                 className="grid gap-2 overflow-auto"
                                                                 style={{gridTemplateRows: `repeat(${classRoom.rows}, 1fr)`, gridTemplateColumns: `repeat(${classRoom.columns}, 1fr)`}}>
-                                                                {classRoom.seats.map( (row, sRIdx) => row.map((obj, sCIdx) => 
-                                                                    <Seat key={`${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`} id={`${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`} seat={obj}/>
-                                                                ))}
-                                                            </div>
-
-                                                            <DragOverlay>
-                                                                {seatDragActiveId ? (
-                                                                    <div className="px-2 py-3 text-sm rounded-lg bg-gray-100 text-gray-500 cursor-grab shadow-2xl shadow-black">
-                                                                        {classRoom.seats[seatDragActiveId.split('-')[3]][seatDragActiveId.split('-')[4]]?.usn}
+                                                                {classRoom.seats.map( (row, sRIdx) => row.map((obj, sCIdx) =>
+                                                                    <div key={`${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`} className="relative z-1">
+                                                                        {openContextMenu.id === `${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}` && openContextMenu.open && <ContextMenu handleContextMenu={handleContextMenu}/>}
+                                                                        <Seat 
+                                                                            key={`${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`} 
+                                                                            id={`${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`} 
+                                                                            seat={obj} 
+                                                                            disabled={!classRoom.edit}
+                                                                            handleContextMenu={handleContextMenu}
+                                                                            handleUsnChange={handleUsnChange}
+                                                                            />
                                                                     </div>
-                                                                ) : null}
-                                                            </DragOverlay>                                                          
-                                                        </DndContext>
-                                                    </div>) : null
-                                                )   
-                                            ) : null
-                                        )
-                                    ) : null
-                                )
-                            )}
+                                                                ))}
+                                                            </div>   
+                                                        </div>) : null
+                                                    )   
+                                                ) : null
+                                            )
+                                        ) : null
+                                    )
+                                )}
+                                {seatDragActiveId && getClassRoom(seatDragActiveId).edit && <DragOverlay>
+                                    <div className="px-2 py-3 text-sm rounded-lg bg-gray-100 text-gray-500 cursor-grab shadow-2xl shadow-black">
+                                        {getSeat(seatDragActiveId).usn}
+                                    </div>
+                                </DragOverlay>}
+                            </DndContext>
                         </div>
                     </div>   
                 </div>         
@@ -480,18 +531,33 @@ function StudentCategory({id, idx, category}) {
     )
 }
 
-function Seat({id, seat}) {
+function Seat({id, seat, disabled, handleContextMenu, handleUsnChange}) {
     const {attributes, listeners, setNodeRef, transform,  transition, isDragging} = useSortable({id});
-    const style = {transform: CSS.Transform.toString(transform), transition: "transform 0s", opacity: isDragging ? 0 : 1};
+    const style = {transform: CSS.Transform.toString(transform), transition: "transform 0s", opacity: !disabled ? (isDragging ? 0 : 1) : 1};
 
     return (
         <div
-            ref={setNodeRef} 
-            {...attributes} 
-            {...listeners} 
-            style={style} 
-            className="px-2 py-3 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 cursor-pointer">
-            {seat.usn == 0 ? '-' : seat.usn}
+        ref={setNodeRef} 
+        {...attributes} 
+        {...listeners} 
+        style={style} 
+        className="min-w-25 px-2 py-3 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 cursor-pointer">
+            <input
+                readOnly={disabled || seat.usn == 0}
+                className="outline-0"
+                onContextMenu={(e) => e.preventDefault()}
+                value={seat?.usn} onChange={(e) => {let [bIdx, fIdx, cRIdx, sRIdx, sCIdx] = id.split('-'); handleUsnChange(e, bIdx, fIdx, cRIdx, sRIdx, sCIdx);}}
+            />            
+        </div>
+    );
+}
+
+function ContextMenu({handleContextMenu}) {
+    return(
+        <div className="min-w-40 py-4 absolute bottom-10 bg-white rounded-2xl flex flex-col border border-gray-200 shadow-xl z-2">
+            <button className="w-full p-2 hover:bg-gray-200" onClick={() => handleContextMenu('', false)}>
+                Cancel
+            </button>
         </div>
     );
 }
