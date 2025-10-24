@@ -9,6 +9,7 @@ import { useAlert } from "../../../AlertContext";
 import {closestCorners, DndContext, DragOverlay, useDraggable} from "@dnd-kit/core";
 import {SortableContext, verticalListSortingStrategy, useSortable} from "@dnd-kit/sortable";
 import {CSS} from "@dnd-kit/utilities";
+import {motion} from "framer-motion";
 
 let batchTable = [];
 
@@ -17,7 +18,7 @@ export default function AllotSeats() {
     const [college, setCollege] = useState(null);
     const examRequest = useLocation().state.examReq;
     const headers = useSelector(state => state.headers);
-    const [noOfBatch, setNoOfBatch] = useState(2);
+    const [noOfBatch, setNoOfBatch] = useState(1);
     const [noOfStudentCategories, setNoOfStudentCategories] = useState(0);
     const navigate = useNavigate();
     const {showAlert} = useAlert();
@@ -135,6 +136,12 @@ export default function AllotSeats() {
 
             batches[i] = updatedBatch;
         }
+
+        
+
+        if(noOfBatch < 2) {
+            batches.push(Array.from({length: batches[batches.length - 1].length}, (_) => {return {usn: 0}}));
+        }
         
         let batchLengths = batches.map((batch) => batch.length);
         let maxBatchSize = Math.max(...batchLengths);
@@ -144,7 +151,7 @@ export default function AllotSeats() {
         for(let j = 0; j < maxBatchSize; j++) {
             let newRow = [];
             for(let i = 0; i < batches.length; i++) {
-                newRow.push(batches[i][j]);
+                newRow.push(batches[i][j] || {usn: 0});
             }
             batchTable.push(newRow);
         }
@@ -152,7 +159,7 @@ export default function AllotSeats() {
 
     const allotSeat = () => {
         if(examRequest?.eligibleStudents?.length === 0) {
-            alert("No Eligible Students Added!");
+            showAlert("No Eligible Students Added!", "info");
             return;
         }
 
@@ -170,7 +177,7 @@ export default function AllotSeats() {
                             if(floor.classRooms[room].isSelected) {
                                 let seats = floor.classRooms[room].seats;
                                 for(let j = 0; j < floor.classRooms[room].columns; j++) {
-                                    if(btc >= noOfBatch) {
+                                    if((noOfBatch > 1 && btc >= noOfBatch) || (noOfBatch < 2 && btc >= 2)) {
                                         btc = 0;
                                     }
                                     
@@ -267,12 +274,12 @@ export default function AllotSeats() {
     }
 
     return (
-        <div className="w-full flex flex-col items-center">
+        <div className="w-full flex flex-col items-center bg-gradient-to-br from-blue-100 text-gray-800">
             {college? 
                 <div className="w-full p-5">
                     <h1 className="font-semibold text-xl text-center text-gray-500">Select available classes in college</h1>
-                    <div className="mt-5 p-4 rounded-2xl border border-gray-200">
-                        <h1 className="p-2 text-center text-gray-600 font-semibold bg-gray-300">Buildings</h1>
+                    <div className="mt-5 p-4 rounded-2xl border border-gray-300 bg-white">
+                        <h1 className="p-2 text-center text-gray-600">Buildings</h1>
                         {college.buildings.map((building, bIdx) => 
                             <div key={bIdx} className="mt-5">
                                 <button
@@ -282,20 +289,30 @@ export default function AllotSeats() {
                                 </button>
                                 
                                 {building.isSelected && 
-                                    <div className="p-2 border rounded-b-2xl">    
-                                        <h1 className="p-2 text-center text-gray-600 font-semibold bg-gray-300">Floors</h1>
+                                    <div className="p-2 rounded-b-2xl bg-gray-100">    
+                                        <h1 className="p-2 text-center text-gray-600">Floors</h1>
                                         {building.floors.map((floor, fIdx) => 
-                                            <div key={fIdx} className="mt-2">
+                                            <motion.div 
+                                                initial={{ opacity: 0}}
+                                                animate={{ opacity: 1}}
+                                                transition={{ duration: 0.6, ease: "easeOut" }} 
+                                                key={fIdx} 
+                                                className="mt-2">
+
                                                 <button 
                                                     className={`px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white ${floor.isSelected && 'bg-black text-white rounded-b-none'}`}
                                                     onClick={(e) => handleFloorSelection(e, bIdx, fIdx)}
                                                     >{floor.name}</button>
 
                                                 {floor.isSelected &&
-                                                    <div className='w-full mb-5 p-5 grid grid-cols-4 gap-5 place-items-center border border-neutral-500 rounded-b-2xl overflow-auto'>
+                                                    < motion.div
+                                                        initial={{ opacity: 0}}
+                                                        animate={{ opacity: 1}}
+                                                        transition={{ duration: 0.6, ease: "easeOut" }} 
+                                                        className='w-full mb-5 p-5 grid grid-cols-4 gap-5 place-items-center rounded-b-2xl overflow-auto bg-gray-300'>
                                                         {floor.classRooms.map((classRoom, cRIdx) => 
                                                             <div key={cRIdx}>
-                                                                <label htmlFor={`${bIdx}${fIdx}${cRIdx}`} className="px-3 py-2 bg-gray-300 rounded flex items-center">
+                                                                <label htmlFor={`${bIdx}${fIdx}${cRIdx}`} className="px-3 py-2 flex items-center">
                                                                     {classRoom.name} 
                                                                     <input 
                                                                         className="ml-2 size-5 accent-black"
@@ -306,9 +323,9 @@ export default function AllotSeats() {
                                                                 </label>
                                                             </div>
                                                         )}
-                                                    </div>   
+                                                    </motion.div>   
                                                 }
-                                            </div>
+                                            </motion.div>
                                         )}
                                     </div>    
                                 }                                    
@@ -316,10 +333,10 @@ export default function AllotSeats() {
                         )}                            
                     </div>
 
-                    <div className="my-5 p-5 flex flex-col gap-2 overflow-auto border border-gray-600 rounded-2xl">
+                    <div className="my-5 p-5 flex flex-col gap-2 overflow-auto border border-gray-300 rounded-2xl bg-white">
                     
                         {stdCategory && 
-                        <div className="max-w-100 flex flex-col p-3 gap-5 bg-gray-200 rounded-2xl">
+                        <div className="max-w-100 flex flex-col p-3 gap-5 bg-gray-100 rounded-2xl">
                             <DndContext onDragEnd={handleBranchDragEnd} collisionDetection={closestCorners}>
                                 <div className="flex flex-col gap-2">
                                     <h1>Branch Priority</h1>
@@ -332,7 +349,7 @@ export default function AllotSeats() {
                             </DndContext>
 
                             <div className="w-fulls flex flex-col">
-                                <h1>Number of branches for each Class:</h1>
+                                <h1>Number of branches in each Class:</h1>
                                 <div className="flex items-center">
                                     <button 
                                         className="h-8 w-8 bg-gray-300 text-black rounded-full flex items-center justify-center cursor-pointer"
@@ -388,32 +405,16 @@ export default function AllotSeats() {
                     </div>
                     <div>
                         <h1 className="font-semibold text-xl text-center text-gray-500">Selected classes for Allotment</h1>
-                        <div className="border border-gray-200">
+                        <div className="flex flex-col">
                             {college.buildings.map((building, bIdx) => 
                                 (building.isSelected ? 
                                     building.floors.map((floor, fIdx) => 
                                         (floor.isSelected ?
                                             floor.classRooms.map((classRoom, cRIdx) => 
                                                 (classRoom.isSelected ? 
-                                                    (<div key={`${bIdx}${fIdx}${cRIdx}`} className="mb-2 p-2 border rounded">
-                                                        <div className="flex flex-wrap justify-between items-center">
-                                                            <div className="flex flex-wrap gap-2">
-                                                                <p 
-                                                                    className="px-2 py-1 font-bold bg-neutral-300 inline rounded"
-                                                                    >ClassRoom: 
-                                                                    <span className="font-normal">{classRoom.name}</span>
-                                                                </p>
-                                                                <p 
-                                                                    className="px-2 py-1 font-bold bg-neutral-300 inline rounded"
-                                                                    >Row: 
-                                                                    <span className="font-normal">{classRoom.rows}</span>
-                                                                </p>
-                                                                <p 
-                                                                    className="px-2 py-1 font-bold bg-neutral-300 inline rounded"
-                                                                    >Column: 
-                                                                    <span className="font-normal">{classRoom.columns}</span>
-                                                                </p>                                                                
-                                                            </div>
+                                                    (<div key={`${bIdx}${fIdx}${cRIdx}`} className="mb-6 p-5 border border-gray-300 bg-white rounded-2xl flex flex-col gap-3">
+                                                        <div className="p-2 flex flex-wrap justify-between items-center  border-b border-gray-300 text-gray-800">
+                                                            <div className="">ClassRoom: {classRoom.name}</div>
 
                                                             <label htmlFor={`${bIdx}${fIdx}${cRIdx}f`} className="flex items-center gap-2">
                                                                 Finalize
@@ -428,8 +429,8 @@ export default function AllotSeats() {
                                                         </div>
                                                         <DndContext onDragStart={handleSeatDragStart} onDragEnd={handleSeatDragEnd}>
                                                             <div 
-                                                                className={`w-full mt-3 grid row-auto gap-2 place-items-center overflow-auto`}
-                                                                style={{gridTemplateColumns: `repeat(${classRoom.columns}, auto)`}}>
+                                                                className="grid gap-2 overflow-auto"
+                                                                style={{gridTemplateRows: `repeat(${classRoom.rows}, 1fr)`, gridTemplateColumns: `repeat(${classRoom.columns}, 1fr)`}}>
                                                                 {classRoom.seats.map( (row, sRIdx) => row.map((obj, sCIdx) => 
                                                                     <Seat key={`${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`} id={`${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`} seat={obj}/>
                                                                 ))}
@@ -437,7 +438,7 @@ export default function AllotSeats() {
 
                                                             <DragOverlay>
                                                                 {seatDragActiveId ? (
-                                                                    <div className="w-full p-5 bg-gray-300 cursor-grab shadow-xl ">
+                                                                    <div className="px-2 py-3 text-sm rounded-lg bg-gray-100 text-gray-500 cursor-grab shadow-2xl shadow-black">
                                                                         {classRoom.seats[seatDragActiveId.split('-')[3]][seatDragActiveId.split('-')[4]]?.usn}
                                                                     </div>
                                                                 ) : null}
@@ -467,7 +468,7 @@ function StudentCategory({id, idx, category}) {
             ref={setNodeRef} 
             {...attributes} 
             {...listeners} 
-            className="p-2 bg-white cursor-pointer rounded-xl"
+            className="p-2 bg-white cursor-pointer rounded-xl shadow border border-gray-300"
             style={style}
             >   
             <h1 className="flex gap-4">
@@ -489,7 +490,7 @@ function Seat({id, seat}) {
             {...attributes} 
             {...listeners} 
             style={style} 
-            className="w-full p-5 bg-gray-200 cursor-pointer">
+            className="px-2 py-3 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 cursor-pointer">
             {seat.usn == 0 ? '-' : seat.usn}
         </div>
     );

@@ -26,7 +26,7 @@ export const signIn = async (req, res) => {
 
         delete user.password;
 
-        let token = jwt.sign(user, process.env.SECRET, {expiresIn: '1h'});
+        let token = jwt.sign(user, process.env.SECRET, {expiresIn: '48h'});
 
         return res.status(200).json({user: user, token: token});
         
@@ -57,7 +57,7 @@ export const signUp = async (req, res) => {
             `
         );
 
-        let token = jwt.sign(user, process.env.SECRET, {expiresIn: '1h'});
+        let token = jwt.sign(user, process.env.SECRET, {expiresIn: '48h'});
         return res.status(200).json({user: user, token: token});
 
     } catch(err) {
@@ -84,7 +84,7 @@ export const StudentSignIn = async (req, res) => {
 
         delete user.password;
 
-        let token = jwt.sign(user, process.env.SECRET, {expiresIn: '1h'});
+        let token = jwt.sign(user, process.env.SECRET, {expiresIn: '48h'});
 
         return res.status(200).json({user: user, token: token});
         
@@ -114,7 +114,7 @@ export const StudentSignUp = async (req, res) => {
             `
         );
 
-        let token = jwt.sign(user, process.env.SECRET, {expiresIn: '1h'});
+        let token = jwt.sign(user, process.env.SECRET, {expiresIn: '48h'});
         return res.status(200).json({user: user, token: token});
 
     } catch(err) {
