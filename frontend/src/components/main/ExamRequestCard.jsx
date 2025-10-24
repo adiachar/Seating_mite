@@ -43,7 +43,7 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
   }
 
   return (
-    <div onClick={() => selectExam(examReq)} className='w-full mb-2 p-5 border border-gray-300 rounded-2xl shadow hover:shadow-lg transition-al'>
+    <div onClick={() => selectExam(examReq)} className='w-full mb-2 p-5 border border-gray-300 rounded-2xl hover:bg-neutral-50 transition-al'>
 
       <div 
         className="w-55 mb-2 px-2 py-1 rounded-xl border-gray-300 text-white flex items-center justify-between cursor-pointer bg-blue-500"
@@ -57,16 +57,22 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
       </div>
 
       {examReq._id == selectedExam._id && <div className='w-full mt-3 p-2 flex gap-3 overflow-x-auto'>
-          <button 
-            className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white flex items-center gap-2'
-            onClick={() => navigate('/view-exam-details', {state: {examReq: examReq}})}
-            ><InfoIcon/> <p>View Details</p></button>
+
           {(user.type === 'admin' || user.type === 'coordinator') && (
-            <button 
-              className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white flex items-center gap-2'
-              onClick={() => setAddStudents(as => !as)}
-              ><PersonAddAlt1Icon/>Add Eligible Students</button>
+            <>
+              <button 
+                className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white flex items-center gap-2'
+                onClick={() => navigate('/view-exam-details', {state: {examReq: examReq}})}
+                ><InfoIcon/> <p>View Details</p></button>
+
+              
+                <button 
+                  className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white flex items-center gap-2'
+                  onClick={() => setAddStudents(as => !as)}
+                  ><PersonAddAlt1Icon/>Add Eligible Students</button>            
+            </>
           )}
+
           {(user.type === 'admin') && (
             <>
           <button 
@@ -81,10 +87,12 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
               ><CheckCircleIcon/>Allot Seats</button>         
             </>
           )}
+
           {examReq.isAllotted && <button
                 className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-green-600 hover:border-transparent hover:text-white flex items-center gap-2'
                 onClick={() => navigate("/allotment", {state: {examReq: examReq}})}
               ><BallotIcon/>View Allotment</button>  }
+
       </div>}
       {((user.type === 'admin' || user.type === 'coordinator') && addStudents) && <AddEligibleStudents examReq={examReq} setRefresh={setRefresh}/>}
     </div>

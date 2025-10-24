@@ -6,7 +6,7 @@ const userSchema = new Schema({
     password: {type: String, required: true},
     type: {type: String, enum: ['admin', 'student', 'coordinator'], required: true},
     college: {type: Schema.Types.ObjectId, ref: 'colleges', required: true},
-    department: {short: {type: String, required: true}, long: {type: String, required: true}},
+    department: {type: String, required: true},
 });
 
 export default model('User', userSchema);
