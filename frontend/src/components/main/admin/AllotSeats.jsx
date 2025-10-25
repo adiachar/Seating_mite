@@ -12,6 +12,7 @@ import {CSS} from "@dnd-kit/utilities";
 import {motion} from "framer-motion";
 
 let batchTable = [];
+let backupSeats = new Map();
 
 export default function AllotSeats() {
     const collegeData = useSelector(state => state.college);
@@ -27,6 +28,7 @@ export default function AllotSeats() {
     const [isAllotmentSaved, setIsAllotmentSaved] = useState(false);
     const [seatDragActiveId, setSeatDragActiveId] = useState(null);
     const [openContextMenu, setOpenContextMenu] = useState({id: '', open: false})
+    const [selected, setSelected] = useState(new Map());
 
     const getCollege = async () => {
         let currentCollege = {...collegeData};
@@ -254,27 +256,65 @@ export default function AllotSeats() {
     
     const handleSeatDragEnd = (event) => {
         const {active, over} = event;
-
+        
         if(!over || active.id === over.id) {
             setSeatDragActiveId(null);
             return;
         }
 
-        let [aBIdx, aFIdx, aCRIdx, aSRIdx, aSCIdx] = active.id.split('-');
-        let [oBIdx, oFIdx, oCRIdx, oSRIdx, oSCIdx] = over.id.split('-');
+        if(selected.size === 0){
+            let [aBIdx, aFIdx, aCRIdx, aSRIdx, aSCIdx] = active.id.split('-');
+            let [oBIdx, oFIdx, oCRIdx, oSRIdx, oSCIdx] = over.id.split('-');
 
-        let updatedCollege = college;
+            let updatedCollege = college;
 
-        if(!updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].edit || !updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].edit) {
-            return;
+            if(!updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].edit || !updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].edit) {
+                return;
+            }
+
+            let temp = updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].seats[aSRIdx][aSCIdx];
+            updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].seats[aSRIdx][aSCIdx] = updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].seats[oSRIdx][oSCIdx];
+            updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].seats[oSRIdx][oSCIdx] = temp;
+
+            setCollege({...updatedCollege});
+            setSeatDragActiveId(null);
+
+        } else {
+            let [oBIdx, oFIdx, oCRIdx, oSRIdx, oSCIdx] = over.id.split('-').map(val => parseInt(val));
+            let newCollege = college;
+            let classRoom = newCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx];
+            let rowLength = classRoom.rows;
+            let columnLength = classRoom.columns;
+             
+            let seats = classRoom.seats;
+            let newSelected = new Map(selected);
+            for(let key of selected.keys()) {
+                
+                if(oSRIdx >= rowLength) {
+                    oSRIdx = 0;
+                    oSCIdx += 1;
+
+                    if(oSCIdx >= columnLength) {
+                        break;
+                    }
+                }
+
+                const [pBIdx, pFIdx, pCRIdx, pSRIdx, pSCIdx] = key.split('-');
+                if(seats[oSRIdx][oSCIdx].usn == 0) {
+                    seats[oSRIdx][oSCIdx] = selected.get(key);
+                    newCollege.buildings[pBIdx].floors[pFIdx].classRooms[pCRIdx].seats[pSRIdx][pSCIdx] = {usn: 0}
+                    newSelected.delete(key);
+                    
+                    let newKey = `${oBIdx}-${oFIdx}-${oCRIdx}-${oSRIdx}-${oSCIdx}`;
+                    newSelected.set(newKey, seats[oSRIdx][oSCIdx]);
+
+                    oSRIdx++;
+                }
+            }
+
+            setCollege({...newCollege});
+            setSelected(newSelected);
         }
-
-        let temp = updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].seats[aSRIdx][aSCIdx];
-        updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].seats[aSRIdx][aSCIdx] = updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].seats[oSRIdx][oSCIdx];
-        updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].seats[oSRIdx][oSCIdx] = temp;
-
-        setCollege({...updatedCollege});
-        setSeatDragActiveId(null);
     }
 
     const handleContextMenu = (id, open) => {
@@ -291,7 +331,18 @@ export default function AllotSeats() {
     const handleClassRoomEdit = (bIdx, fIdx, cRIdx) => {
         let updatedCollege = college;
         updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx].edit = !updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx].edit;
+        backupSeats.set(`${bIdx}-${fIdx}-${cRIdx}`, [...updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx].seats.map((row) => row.map((seat) => {return {...seat}}))]);
         setCollege({...updatedCollege});
+        setSelected(new Map());
+    }
+
+    const handleBack = (bIdx, fIdx, cRIdx) => {
+        let updatedCollege = college;
+        updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx].edit = false;
+        updatedCollege.buildings[bIdx].floors[fIdx].classRooms[cRIdx].seats = backupSeats.get(`${bIdx}-${fIdx}-${cRIdx}`);
+        backupSeats.delete(`${bIdx}-${fIdx}-${cRIdx}`);
+        setCollege({...updatedCollege});
+        setSelected(new Map());
     }
 
     const getSeat = (id) => {
@@ -302,6 +353,25 @@ export default function AllotSeats() {
     const getClassRoom = (id) => {
         const [bIdx, fIdx, cRIdx, sRIdx, sCIdx] = id.split('-');
         return college.buildings[bIdx].floors[fIdx].classRooms[cRIdx];
+    }
+
+    const handleSelect = (e, id, seat) => {
+        if(!getClassRoom(id).edit || (!e.ctrlKey && !e.metaKey)) {
+            if(!selected.has(id)) {
+                setSelected(new Map());
+            }
+            return;
+        }
+        
+        let newSelect = new Map(selected);
+
+        if(newSelect.has(id)) {
+            newSelect.delete(id);
+        } else {
+            newSelect.set(id, seat);
+        }
+        
+        setSelected(newSelect);
     }
 
     return (
@@ -434,6 +504,8 @@ export default function AllotSeats() {
                                 >Save Allotment</Button>  
                         </div>
                     </div>
+
+
                     <div>
                         <h1 className="font-semibold text-xl text-center text-gray-500">Selected classes for Allotment</h1>
                         <div className="flex flex-col">
@@ -444,7 +516,9 @@ export default function AllotSeats() {
                                             (floor.isSelected ?
                                                 floor.classRooms.map((classRoom, cRIdx) => 
                                                     (classRoom.isSelected ? 
-                                                        (<div key={`${bIdx}${fIdx}${cRIdx}`} className="mb-6 p-5 border border-gray-300 bg-white rounded-2xl flex flex-col gap-3">
+                                                        (<div key={`${bIdx}${fIdx}${cRIdx}`} 
+                                                            className="mb-6 p-5 border border-gray-300 bg-white rounded-2xl flex flex-col gap-3"
+                                                            onClick={() => setSelected(new Map())}>
                                                             <div className="p-2 flex flex-wrap justify-between items-center  border-b border-gray-300 text-gray-800">
                                                                 
                                                                 <div className="flex gap-3 items-center">
@@ -454,11 +528,18 @@ export default function AllotSeats() {
                                                                         className="px-3 py-2 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white outline-0 rounded-2xl text-sm transition-colors">
                                                                         Edit
                                                                     </button>}
-                                                                    {classRoom.edit && <button
-                                                                        onClick={() => handleClassRoomEdit(bIdx, fIdx, cRIdx)}
-                                                                        className="px-3 py-2 border border-green-600 text-green-600 hover:bg-green-600 hover:text-white outline-0 rounded-2xl text-sm transition-colors">
-                                                                        Save
-                                                                    </button>}
+                                                                    {classRoom.edit && <div className="flex gap-2">
+                                                                        <button
+                                                                            onClick={() => handleClassRoomEdit(bIdx, fIdx, cRIdx)}
+                                                                            className="px-3 py-2 border border-green-600 text-green-600 hover:bg-green-600 hover:text-white outline-0 rounded-2xl text-sm transition-colors">
+                                                                            Save
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleBack(bIdx, fIdx, cRIdx)}
+                                                                            className="px-3 py-2 border border-gray-600 hover:bg-black hover:text-white text-black outline-0 rounded-2xl text-sm transition-colors">
+                                                                            Back
+                                                                        </button>
+                                                                    </div>}
                                                                 </div>
                                                                 <label htmlFor={`${bIdx}${fIdx}${cRIdx}f`} className="flex items-center gap-2">
                                                                     Finalize
@@ -475,19 +556,26 @@ export default function AllotSeats() {
                                                             <div 
                                                                 className="grid gap-2 overflow-auto"
                                                                 style={{gridTemplateRows: `repeat(${classRoom.rows}, 1fr)`, gridTemplateColumns: `repeat(${classRoom.columns}, 1fr)`}}>
-                                                                {classRoom.seats.map( (row, sRIdx) => row.map((obj, sCIdx) =>
-                                                                    <div key={`${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`} className="relative z-1">
-                                                                        {openContextMenu.id === `${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}` && openContextMenu.open && <ContextMenu handleContextMenu={handleContextMenu}/>}
-                                                                        <Seat 
-                                                                            key={`${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`} 
-                                                                            id={`${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`} 
-                                                                            seat={obj} 
-                                                                            disabled={!classRoom.edit}
-                                                                            handleContextMenu={handleContextMenu}
-                                                                            handleUsnChange={handleUsnChange}
-                                                                            />
-                                                                    </div>
-                                                                ))}
+                                                                {classRoom.seats.map( (row, sRIdx) => row.map((obj, sCIdx) =>{
+                                                                    let id = `${bIdx}-${fIdx}-${cRIdx}-${sRIdx}-${sCIdx}`;
+                                                                    return(
+                                                                        <div 
+                                                                            key={id} 
+                                                                            className="border-2"
+                                                                            onPointerDown={(e) => handleSelect(e, id, obj)}
+                                                                            style={{borderColor: selected.has(id) ? 'blue' : 'transparent'}}>
+
+                                                                            {openContextMenu.id === id && openContextMenu.open && <ContextMenu handleContextMenu={handleContextMenu}/>}
+                                                                            <Seat 
+                                                                                key={id} 
+                                                                                id={id}
+                                                                                seat={obj} 
+                                                                                disabled={!classRoom.edit}
+                                                                                handleUsnChange={handleUsnChange}
+                                                                                />
+                                                                        </div>
+                                                                    )
+                                                                }))}
                                                             </div>   
                                                         </div>) : null
                                                     )   
@@ -497,9 +585,20 @@ export default function AllotSeats() {
                                     )
                                 )}
                                 {seatDragActiveId && getClassRoom(seatDragActiveId).edit && <DragOverlay>
-                                    <div className="px-2 py-3 text-sm rounded-lg bg-gray-100 text-gray-500 cursor-grab shadow-2xl shadow-black">
+                                    {selected.size == 0 ? <div className="px-2 py-3 text-sm rounded-lg bg-gray-100 text-gray-500 cursor-grab shadow-2xl shadow-black">
                                         {getSeat(seatDragActiveId).usn}
-                                    </div>
+                                    </div> : 
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ duration: 0.1, ease: "easeOut", delay: 0.2 }}
+                                        className="px-2 border border-gray-300 bg-white shadow-2xl shadow-blacke overflow-hidden rounded-lg"> 
+                                        {Array.from(selected.entries()).map(([key, seat]) => 
+                                            <div key={key} className="my-2 px-2 py-3 text-sm rounded-lg bg-gray-100 text-gray-500 cursor-grab ">
+                                                {seat.usn}
+                                            </div>
+                                        )}
+                                    </motion.div>}
                                 </DragOverlay>}
                             </DndContext>
                         </div>
@@ -531,9 +630,9 @@ function StudentCategory({id, idx, category}) {
     )
 }
 
-function Seat({id, seat, disabled, handleContextMenu, handleUsnChange}) {
+function Seat({id, seat, disabled, handleUsnChange}) {
     const {attributes, listeners, setNodeRef, transform,  transition, isDragging} = useSortable({id});
-    const style = {transform: CSS.Transform.toString(transform), transition: "transform 0s", opacity: !disabled ? (isDragging ? 0 : 1) : 1};
+    const style = {transform: CSS.Transform.toString(transform), transition: "transform 0s"};
 
     return (
         <div
@@ -544,9 +643,11 @@ function Seat({id, seat, disabled, handleContextMenu, handleUsnChange}) {
         className="min-w-25 px-2 py-3 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 cursor-pointer">
             <input
                 readOnly={disabled || seat.usn == 0}
-                className="outline-0"
+                className="outline-gray-400 outline-0"
                 onContextMenu={(e) => e.preventDefault()}
-                value={seat?.usn} onChange={(e) => {let [bIdx, fIdx, cRIdx, sRIdx, sCIdx] = id.split('-'); handleUsnChange(e, bIdx, fIdx, cRIdx, sRIdx, sCIdx);}}
+                value={seat?.usn}
+                style={{opacity: !disabled ? (isDragging ? 0 : 1) : 1}}
+                onChange={(e) => {let [bIdx, fIdx, cRIdx, sRIdx, sCIdx] = id.split('-'); handleUsnChange(e, bIdx, fIdx, cRIdx, sRIdx, sCIdx);}}
             />            
         </div>
     );

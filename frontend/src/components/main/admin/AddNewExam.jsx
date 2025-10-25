@@ -78,6 +78,7 @@ export default function AddNewExam({setRefresh, refresh}) {
                         variant='outlined' 
                         color="dark" 
                         sx={{
+                            fontSize: "small",
                             padding: "0.3rem 0.5rem",
                             textTransform: "capitalize",
                             borderRadius: "1rem",
