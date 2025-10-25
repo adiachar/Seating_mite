@@ -65,15 +65,15 @@ export default function Navbar() {
             import_contacts
           </span>
           <div className='flex flex-col gap-1'>
-            <h1 className='font-semibold text-xl'>{college.shortName} - {user?.type == 'student' ? "Student Portal" : user?.type == 'admin' ? "Admin Portal" : 'Coordinator Portal'}</h1>
-            <p className='text-sm text-gray-400 font-normal'>{college.name}</p>
+            <h1 className='font-semibold lg:text-xl md:text-xl'>{college.shortName} - {user?.type == 'student' ? "Student Portal" : user?.type == 'admin' ? "Admin Portal" : 'Coordinator Portal'}</h1>
+            <p className='text-xs lg:text-sm md:text-sm text-gray-400 font-normal'>{college.name}</p>
           </div>
         </div>
 
-        <div className='justify-self-end'>
+        <div className='justify-self-end text-xs'>
           <button 
             onClick={() => {localStorage.clear(); dispatch(setUser({})); dispatch(setCollege({})); navigate('/sign')}}
-            className='px-3 py-2 border rounded-xl '>
+            className='px-3 py-2 border rounded-xl text-nowrap'>
             Log out
           </button>
         </div>

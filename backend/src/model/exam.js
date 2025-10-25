@@ -3,6 +3,7 @@ import {Schema, model} from "mongoose";
 const examSchema = new Schema([
     {
         date: {type: Date, required: true},
+        time: {type: Date},
         type: {type: String, required: true, enum: ['IA1', 'IA2', 'IA3', 'SE1', 'SE2']},
         eligibleStudents: [
             {branch: {type: String, required: true}, semester: {type: Number, required: true}, subject: {type: String, required: true}, students: [String]}

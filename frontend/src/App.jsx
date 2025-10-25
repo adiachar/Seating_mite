@@ -11,15 +11,18 @@ import CollegeData from './components/main/admin/CollegeData';
 import Allotment from './components/main/Allotment';
 import Home from './components/main/Home';
 import { AlertProvider } from './AlertContext';
+import Print from './components/main/Print';
+import { useLocation } from 'react-router-dom';
 
 function App() {
-
+  const location = useLocation();
+  
   return (
     <div className="App h-screen p-0 m-0 flex flex-col">
       <Provider store={store}>
         <AlertProvider>
-          <div className='min-h-10 w-full bg-neutral-800'></div>
-          <Navbar/>
+          {location.pathname != '/print' && <div className='min-h-10 w-full bg-neutral-800'></div>}
+          {location.pathname != '/print' && <Navbar/>}
           <div className='h-full'>
             <Routes>
               <Route path='/*' element={<Home/>} />
@@ -29,6 +32,7 @@ function App() {
               <Route path='/allot-seats' element={<AllotSeats/>}/>
               <Route path='/college-data' element={<CollegeData/>}/>
               <Route path='/allotment' element={<Allotment/>}/>
+              <Route path='/print' element={<Print/>}/>
             </Routes>            
           </div>          
         </AlertProvider>
