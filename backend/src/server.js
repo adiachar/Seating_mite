@@ -6,7 +6,6 @@ import userRouter from "./router/user.js";
 import examRouter from "./router/exam.js";
 import studentRouter from "./router/student.js";
 import collegeRouter from "./router/college.js";
-import { sendEmail } from "./utils/mail.js";
 
 dotenv.config();
 
