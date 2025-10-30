@@ -6,6 +6,7 @@ import {useAlert} from '../../../AlertContext';
 
 export default function AddNewExam({setRefresh, refresh}) {
     const [date, setDate] = useState('');
+    const [time, setTime] = useState('09:30');
     const examTypes = useSelector(state => state.college.examTypes);
     const [type, setType] = useState({});
     const [loading, setLoading] = useState(false);
@@ -23,14 +24,14 @@ export default function AddNewExam({setRefresh, refresh}) {
         e.preventDefault();
         setLoading(true);
 
-        if(!date || !type) {
+        if(!date || !type || !time) {
             showAlert("Please fill all the fields!", "error");
             setLoading(false);
             return;
         }
 
         try {
-            let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add`, {date, type}, {headers});
+            let response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/exam/add`, {type, date, time}, {headers});
             if(response.status === 200) {
                 showAlert("Exam Added Successfully!", "success");
                 setLoading(false);
@@ -52,12 +53,6 @@ export default function AddNewExam({setRefresh, refresh}) {
         <div className='w-full mt-10 mb-6 p-5 bg-white border border-gray-300 rounded-2xl'>
             <h1 className='mb-2 text-center'>Add New Exam</h1>
             <form onSubmit={submitData} className='flex flex-col flex-wrap gap-3'>
-                <label htmlFor="" className='flex flex-col self-start'>
-                    Date of Exam
-                    <input
-                        className='min-w-50 mt-1 mb-3 p-2 border border-gray-300 rounded-2xl bg-gray-100 text-sm'
-                        type='date' name='date' required placeholder='Exter exam date' value={date} onChange={e => setDate(e.target.value)}/>                    
-                </label>
 
                 <label htmlFor="" className='flex flex-col self-start'>
                     Exam Type
@@ -68,6 +63,20 @@ export default function AddNewExam({setRefresh, refresh}) {
                             <option key={index} value={type}>{type}</option>
                         ))}
                     </select>                    
+                </label>
+
+                <label htmlFor="" className='flex flex-col self-start'>
+                    Date of Exam
+                    <input
+                        className='min-w-50 mt-1 mb-3 p-2 border border-gray-300 rounded-2xl bg-gray-100 text-sm'
+                        type='date' name='date' required placeholder='Exter exam date' value={date} onChange={e => setDate(e.target.value)}/>                    
+                </label>
+
+                <label htmlFor="" className='flex flex-col self-start'>
+                    Time of Exam
+                    <input
+                        className='min-w-50 mt-1 mb-3 p-2 border border-gray-300 rounded-2xl bg-gray-100 text-sm'
+                        type='time' name='time' required placeholder='Exter exam time' value={time} onChange={e => setTime(e.target.value)}/>                    
                 </label>
 
                 <div className='w-12/12 flex items-center'>

@@ -262,26 +262,21 @@ export default function AllotSeats() {
             return;
         }
 
+        let [aBIdx, aFIdx, aCRIdx, aSRIdx, aSCIdx] = active.id.split('-').map(val => parseInt(val));
+        let [oBIdx, oFIdx, oCRIdx, oSRIdx, oSCIdx] = over.id.split('-').map(val => parseInt(val));
+
+        if(!college.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].edit || !college.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].edit) {
+            return;
+        }
+
+        let newCollege = college;
+
         if(selected.size === 0){
-            let [aBIdx, aFIdx, aCRIdx, aSRIdx, aSCIdx] = active.id.split('-');
-            let [oBIdx, oFIdx, oCRIdx, oSRIdx, oSCIdx] = over.id.split('-');
-
-            let updatedCollege = college;
-
-            if(!updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].edit || !updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].edit) {
-                return;
-            }
-
-            let temp = updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].seats[aSRIdx][aSCIdx];
-            updatedCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].seats[aSRIdx][aSCIdx] = updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].seats[oSRIdx][oSCIdx];
-            updatedCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].seats[oSRIdx][oSCIdx] = temp;
-
-            setCollege({...updatedCollege});
-            setSeatDragActiveId(null);
+            let temp = newCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].seats[aSRIdx][aSCIdx];
+            newCollege.buildings[aBIdx].floors[aFIdx].classRooms[aCRIdx].seats[aSRIdx][aSCIdx] = newCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].seats[oSRIdx][oSCIdx];
+            newCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx].seats[oSRIdx][oSCIdx] = temp;
 
         } else {
-            let [oBIdx, oFIdx, oCRIdx, oSRIdx, oSCIdx] = over.id.split('-').map(val => parseInt(val));
-            let newCollege = college;
             let classRoom = newCollege.buildings[oBIdx].floors[oFIdx].classRooms[oCRIdx];
             let rowLength = classRoom.rows;
             let columnLength = classRoom.columns;
@@ -312,9 +307,11 @@ export default function AllotSeats() {
                 }
             }
 
-            setCollege({...newCollege});
             setSelected(newSelected);
         }
+
+        setCollege({...newCollege});
+        setSeatDragActiveId(null);
     }
 
     const handleContextMenu = (id, open) => {
@@ -645,7 +642,7 @@ function Seat({id, seat, disabled, handleUsnChange}) {
                 readOnly={disabled || seat.usn == 0}
                 className="outline-gray-400 outline-0"
                 onContextMenu={(e) => e.preventDefault()}
-                value={seat?.usn}
+                value={seat?.usn || '-'}
                 style={{opacity: !disabled ? (isDragging ? 0 : 1) : 1}}
                 onChange={(e) => {let [bIdx, fIdx, cRIdx, sRIdx, sCIdx] = id.split('-'); handleUsnChange(e, bIdx, fIdx, cRIdx, sRIdx, sCIdx);}}
             />            

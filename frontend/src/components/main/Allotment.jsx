@@ -150,7 +150,7 @@ export default function Allotment() {
                             </div>
                             <div className='my-1 flex justify-between font-semibold lg:text-sm md:text-sm text-[9px]'>
                                 <p className='flex gap-2'><span>Date:</span><span>{getDate(examReq?.date)}</span></p>
-                                {examReq?.time && <p><span>Time:</span><span>{examReq.time}</span></p>}
+                                {examReq?.time && <p className='flex gap-2'><span>Time:</span><span>{examReq.time}</span></p>}
                             </div>
                         </div>
                         <div className='w-full flex gap-3 font-semibold lg:text-sm md:text-sm text-[9px]'>

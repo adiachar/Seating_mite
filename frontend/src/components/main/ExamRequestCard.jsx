@@ -9,11 +9,13 @@ import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import BallotIcon from '@mui/icons-material/Ballot';
+import EditIcon from '@mui/icons-material/Edit';
 import { useAlert } from "../../AlertContext";
 
 export default function ExamRequestCard({examReq, setRefresh, selectedExam, selectExam}) {
   const user = useSelector(state => state.user);
   const [addStudents, setAddStudents] = useState(false);
+  const [editReq, setEditReq] = useState(false);
   const navigate = useNavigate();
   const {showAlert} = useAlert();
   const headers = useSelector(state => state.headers);
@@ -84,7 +86,12 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
               <button
                 className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white flex items-center gap-2'
                 onClick={() => navigate("/allot-seats", {state: {examReq: examReq}})}
-              ><CheckCircleIcon/>Allot Seats</button>         
+              ><CheckCircleIcon/>Allot Seats</button>
+
+              <button
+                className='px-3 py-1 text-sm text-black rounded-xl text-nowrap shadow transition-all border border-gray-600 hover:bg-black hover:text-white flex items-center gap-1'
+                onClick={() => setEditReq(e => !e)}
+              ><EditIcon/>Edit</button>
             </>
           )}
 
@@ -95,6 +102,7 @@ export default function ExamRequestCard({examReq, setRefresh, selectedExam, sele
 
       </div>}
       {((user.type === 'admin' || user.type === 'coordinator') && addStudents) && <AddEligibleStudents examReq={examReq} setRefresh={setRefresh}/>}
+      {(user.type === 'admin' && editReq) && <EditExamRequest examReq={examReq} setRefresh={setRefresh}/>}
     </div>
   );
 }
@@ -220,6 +228,113 @@ function AddEligibleStudents({examReq, setRefresh}) {
             >Submit</Button>            
         </div>
       </form>
+    </div>
+  )
+}
+
+function EditExamRequest({examReq, setRefresh}) {
+  const [loading, setLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const {showAlert} = useAlert();
+  const headers = useSelector(state => state.headers);
+  const examTypes = useSelector(state => state.college.examTypes);
+  const [type, setType] = useState(examReq?.type || college?.examTypes[0]);
+  const [date, setDate] = useState(new Date(examReq?.date).toISOString().split('T')[0]);
+  const [time, setTime] = useState(examReq?.time || '09:30');
+
+
+  const submitData = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if(!type || !date || !time) {
+      showAlert("Please fill all the fields!", "error");
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      
+      let response = await axios.patch(`${import.meta.env.VITE_SERVER_URL}/exam/edit/${examReq._id}`, {type, date, time}, {headers});
+      setLoading(false);
+      if(response.status === 200) {
+        showAlert("Exam request editted Successfully!", "success");
+        setIsSubmitted(true);
+        setRefresh(r => !r);
+      } else {
+        showAlert("Something went wrong!", "error");
+      }          
+    }
+    catch(err) {
+      console.log(err);
+      showAlert("Something went wrong!", "error");
+      setLoading(false);
+      return;
+    };
+  }
+
+  return (
+    <div className='w-full mt-5 p-5 border border-gray-300 rounded shadow'>
+      {examReq && <form onSubmit={submitData} className='w-12/12 flex flex-wrap gap-3'>
+        <label className='w-full lg:w-2/12' htmlFor="">
+          Exam Type
+          <select  
+            className='w-full mb-3 p-2 border border-gray-300 rounded-2xl bg-gray-100 text-sm'
+            required
+            name='type' 
+            onChange={e => setType(e.target.value)}
+            defaultValue={type}>
+            {examTypes.map((type, idx) => (
+              <option key={idx} value={type}>{type}</option>
+            ))}
+          </select>          
+        </label>
+
+        <label className='w-12/12 lg:w-2/12' htmlFor="">
+          Date
+          <input 
+            type="date"
+            className='w-full mb-3 p-2 border border-gray-300 rounded-2xl bg-gray-100 text-sm'
+            name='date' 
+            required 
+            placeholder='Date' 
+            value={date} 
+            onChange={e => setDate(e.target.value)}/>          
+        </label>
+
+        <label className='w-12/12 lg:w-2/12' htmlFor="">
+          Time
+          <input 
+            type="time"
+            className='w-full mb-3 p-2 border border-gray-300 rounded-2xl bg-gray-100 text-sm'
+            name='time' 
+            required 
+            placeholder='Time' 
+            value={time}
+            onChange={e => setTime(e.target.value)}/>          
+        </label>
+        
+        <div className='w-12/12 flex items-center'>
+          <Button 
+            type='submit'  
+            disabled={isSubmitted} 
+            loading={loading}
+            variant='outlined' 
+            color="dark" 
+            sx={{
+              padding: "0.3rem 0.5rem",
+              textTransform: "capitalize",
+              borderRadius: "1rem",
+              color: "black",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "none",
+              ":hover": {backgroundColor: "#16A34A", color: "white"}
+            }}
+            >Submit</Button>            
+        </div>
+      </form>}
     </div>
   )
 }

@@ -77,19 +77,19 @@ const getDate = (date) => {
 
 export const addExam = async (req, res) => {
     try {
-        const {date, type} = req.body;
+        const {type, date, time} = req.body;
 
-        if(!date || !type) {
+        if(!date || !type || !time) {
             return res.status(400).json({message: "Please provide all the required fields!"});
         }
 
-        const exam = await Exam.findOne({date: date, type: type});
+        const exam = await Exam.findOne({date: date, type: type, time: time});
 
         if(exam) {
             return res.status(400).json({message: "Exam Request already exists!"});
         }
 
-        const newExam = new Exam({date: date, type: type});
+        const newExam = new Exam({date: date, type: type, time: time});
         await newExam.save();
 
         const allUsers = User.find({type: 'coordinator'});
@@ -152,6 +152,21 @@ export const getAllotment = async (req, res) => {
         return res.status(200).json({allotment: exam.allotment});
 
     } catch(err) {
+        console.log(err);
+        return res.status(500).json({message: "Internal Server Error"});
+    }
+}
+
+export const editExam = async (req, res) => {
+    try {
+        const {examId} = req.params;
+        const {type, date, time} = req.body;
+
+        const response = await Exam.findByIdAndUpdate(examId, {$set: {type: type, date: date, time: time}}, {new: true});
+
+        return res.status(200).json({message: "Exam editted Successfully!"});
+    } 
+    catch(err) {
         console.log(err);
         return res.status(500).json({message: "Internal Server Error"});
     }

@@ -222,7 +222,7 @@ export default function Home() {
                     <CollegeData setRefresh={setRefresh}/>
                 </div>}
                 
-                <div className="mb-6 p-5 border border-gray-300 bg-white rounded-2xl flex flex-col gap-3">
+                {user?.type === 'student' && <div className="mb-6 p-5 border border-gray-300 bg-white rounded-2xl flex flex-col gap-3">
                     <h1 className="text-xl font-semibold">Important Instructions</h1>
                     <ul className="mt-7">
                         <li className="mb-3 flex items-center gap-3">
@@ -250,7 +250,7 @@ export default function Home() {
                             <p>Mobile phones and electronic devices are not permitted in the examination hall.</p>
                         </li>
                     </ul>
-                </div>
+                </div>}
             </> : <div className="h-full w-full flex items-center justify-center">
                     <div className="h-15 w-15 border-8 border-blue-600 border-t-transparent animate-spin rounded-full flex items-center justify-center">
                         
